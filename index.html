@@ -424,9 +424,8 @@ perm_students_read:'Arag ardayda', perm_students_write:'Maamul ardayda', perm_te
    Use the *publishable* (anon) key ONLY. NEVER put the service_role /
    secret key in this file: it would be visible to every visitor.
    ===================================================================== */
-const SUPABASE_URL = 'https://bfozghbwpyspotpblcyr.supabase.co';                 // e.g. https://abcdxyz.supabase.co
-const SUPABASE_KEY = 'sb_publishable_AkI4NAyrbLlnvmMiAfPaUQ_vO6C8UqJ';     // e.g. sb_publishable_xxx  (or legacy anon key)
-
+const SUPABASE_URL = 'https://fkyqbuwsbayjypyujgj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_AkI4NAyrbLlnvmMiAfPaUQ_vO6C8UqJ';
 const TZ = 'Africa/Addis_Ababa';
 const PAGE_SIZE = 15;
 const CONFIGURED = /^https:\/\/[^/]+\.supabase\.(co|in)/i.test(SUPABASE_URL) && !!SUPABASE_KEY && !/^YOUR_/.test(SUPABASE_KEY);
