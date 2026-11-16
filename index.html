@@ -860,12 +860,12 @@ let authMode = 'login';
 function showAuth(mode = 'login', msg = '') {
   authMode = mode; show('auth');
   $('#auth-lang').innerHTML = langSwitch();
-  $('#auth-brand').innerHTML = `<div class="logo"><span class="logo-mark">${ic('cap', 22)}</span><span>${t('app_name')}</span></div>
+  $('#auth-brand').innerHTML = `<div class="logo"><img src="https://bfozghbwpyspotpblcyr.supabase.co/storage/v1/object/public/school-assets/file_00000000a3f882088c2e740a1a6dd8d5.png" style="width:38px;height:38px;object-fit:contain;border-radius:10px"><span>${t('app_name')}</span></div>
     <div><h1>${t('auth_headline')}</h1><p style="margin-top:12px">${t('auth_sub')}</p>
     <div class="auth-feats"><div>${ic('check')} ${t('feat1')}</div><div>${ic('check')} ${t('feat2')}</div><div>${ic('check')} ${t('feat3')}</div></div></div>
     <div class="small" style="color:#9db4e6">${t('footer_note')}</div>`;
   const card = $('#auth-card'), flash = msg ? `<div class="alert err" role="alert" style="margin-top:14px">${esc(msg)}</div>` : '';
-  const mobileLogo = `<div class="logo" style="margin-bottom:22px"><span class="logo-mark">${ic('cap', 22)}</span><span>${t('app_name')}</span></div>`;
+  const mobileLogo = `<div class="logo" style="margin-bottom:22px"><img src="https://bfozghbwpyspotpblcyr.supabase.co/storage/v1/object/public/school-assets/file_00000000a3f882088c2e740a1a6dd8d5.png" style="width:38px;height:38px;object-fit:contain;border-radius:10px"><span>${t('app_name')}</span></div>`;
   if (mode === 'login') {
     card.innerHTML = `${mobileLogo}<h2>${t('welcome')}</h2><p class="muted" style="margin:0">${t('login_sub')}</p>${flash}
       <form id="f-login"><div class="fg"><label for="l_email">${t('email')}</label><input id="l_email" type="email" required autocomplete="username" placeholder="name@school.edu.et"></div>
