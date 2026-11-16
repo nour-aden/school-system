@@ -1083,10 +1083,19 @@ async function renderDashboard() {
   const payCard = pays ? `<div class="card"><div class="card-head"><h3>${t('recent_payments')}</h3><a href="#/fees" class="small">${t('view_all')}</a></div>
     ${(pays.data || []).length ? `<div class="table-wrap"><table class="tbl" style="min-width:420px"><tbody>${pays.data.map(p => `<tr><td><b>${esc(p.students?.full_name || '—')}</b><br><span class="muted small">${esc(p.receipt_no)} · ${fmtDate(p.paid_on)}</span></td><td class="num"><b>${money(p.amount)}</b><br><span class="muted small">${t('pm_' + p.method)}</span></td></tr>`).join('')}</tbody></table></div>` : emptyState(t('no_payments'))}</div>` : '';
 
-  v.innerHTML = pageHead(t('nav_dashboard'), t('welcome_back', { name: (S.profile.full_name || '').split(' ')[0] || '' }), `<button class="btn" data-act="dash-refresh">${ic('clock', 16)} ${t('refresh')}</button>`) +
-    `<div class="stats">${cards.join('')}</div>` +
-    ((chart || stats) ? `<div class="grid-main">${chart}${stats}</div>` : '') +
-    ((actCard || payCard) ? `<div class="grid2">${actCard}${payCard}</div>` : '');
+  
+v.innerHTML = pageHead(t('nav_dashboard'), t('welcome_back', { name: (S.profile.full_name || '').split(' ')[0] || '' }), `<button class="btn" data-act="dash-refresh">${ic('clock', 16)} ${t('refresh')}</button>`) +
+  `<div style="position:relative;min-height:220px;border-radius:18px;overflow:hidden;margin-bottom:20px;background:linear-gradient(90deg,rgba(10,35,75,.88),rgba(10,35,75,.2)),url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=85') center/cover;display:flex;align-items:center;padding:28px;color:white">
+    <div style="max-width:500px">
+      <div style="font-size:13px;letter-spacing:2px;margin-bottom:10px">BULSHO KAAB SCHOOL</div>
+      <h2 style="font-size:clamp(23px,4vw,34px);margin:0 0 10px;color:white">Ku soo dhowow Dashboard-ka</h2>
+      <p style="font-size:14px;margin:0;color:#edf4ff">Maamul waxbarashada, ardayda iyo horumarka dugsigaaga hal meel.</p>
+    </div>
+  </div>` +
+  `<div class="stats">${cards.join('')}</div>` +
+  ((chart || stats) ? `<div class="grid-main">${chart}${stats}</div>` : '') +
+  ((actCard || payCard) ? `<div class="grid2">${actCard}${payCard}</div>` : '');
+         
 }
 ACT['dash-refresh'] = () => route();
 
