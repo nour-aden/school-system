@@ -445,7 +445,24 @@ async function renderHome() {
   const doneIds = new Set(att.map(a => a.section_id)), pend = secs.filter(s => !doneIds.has(s.id));
   const nStu = new Set(S.enr.map(e => e.student_id)).size;
   const first = (S.teacher.full_name || '').split(' ')[0];
-  $('#view').innerHTML = pageHead(t('hello', { name: first }), fmtDate(S.today) + (S.year ? ' · ' + S.year.name : '')) +
+  
+const hour = new Date().getHours();
+const greeting = hour < 12 ? 'Subax wanaagsan' : hour < 18 ? 'Galab wanaagsan' : 'Habeen wanaagsan';
+
+$('#view').innerHTML = `
+  <div style="background:linear-gradient(90deg,rgba(10,35,60,.85),rgba(10,35,60,.15)),url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=85') center/cover;border-radius:16px;padding:28px 20px;color:white;margin-bottom:18px;min-height:150px;display:flex;flex-direction:column;justify-content:center">
+    <h2 style="margin:0 0 8px">${greeting}, Macallin ${esc(first)}!</h2>
+    <p style="margin:0">Ku soo dhowow Teacher Portal-kaaga.</p>
+    <small style="margin-top:10px">${fmtDate(S.today)}</small>
+  </div>` +
+  (!S.asg.length ? `<div class="alert warn">${t('no_assign')}</div>` : '') +
+  `<div class="grid gap"><div class="card stat"><b>${secs.length}</b><span>${t('my_classes')}</span></div><div class="card stat"><b>${nStu}</b><span>${t('my_students')}</span></div>
+   <div class="card stat"><b style="color:${pend.length ? 'var(--amber)' : 'var(--green)'}">${pend.length}</b><span>${t('pending_att')}</span></div><div class="card stat"><b>${units.length}</b><span>${t('nav_marks')}</span></div></div>
+  <div class="section-title">${t('take_attendance')} — ${t('today')}</div>
+  <div class="card gap">${secs.length ? secs.map(s => { const d = doneIds.has(s.id); return `<button class="list-item" data-act="goto-att" data-id="${s.id}"><div class="grow"><b>${esc(s.label)}</b><span class="muted small">${t('students_n', { n: studentsIn({ section_id: s.id }).length })}</span></div>${d ? `<span class="badge b-green">${ic('check', 13)} ${t('done')}</span>` : `<span class="badge b-amber">${t('not_taken')}</span>`}</button>`; }).join('') : emptyState(t('no_assign'), 'calendar')}</div>
+  <div class="section-title">${t('my_assignments')}</div>
+  <div class="card">${units.length ? units.map(u => `<button class="list-item" data-act="goto-marks" data-id="${esc(u.key)}"><div class="grow"><b>${esc(u.label)}</b><span class="muted small">${u.sections ? [...u.sections].map(secName).join(', ') : t('all_sections')}</span></div><span class="badge b-blue">${t('enter_marks')}</span></button>`).join('') : emptyState(t('no_assign'), 'book')}</div>`;
+  
     (!S.asg.length ? `<div class="alert warn">${t('no_assign')}</div>` : '') +
     `<div class="grid gap"><div class="card stat"><b>${secs.length}</b><span>${t('my_classes')}</span></div><div class="card stat"><b>${nStu}</b><span>${t('my_students')}</span></div>
      <div class="card stat"><b style="color:${pend.length ? 'var(--amber)' : 'var(--green)'}">${pend.length}</b><span>${t('pending_att')}</span></div><div class="card stat"><b>${units.length}</b><span>${t('nav_marks')}</span></div></div>
