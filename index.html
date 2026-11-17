@@ -1121,7 +1121,7 @@ async function renderStudents() {
 async function loadStudents() {
   const box = $('#stu-list'); if (!box) return;
   box.innerHTML = skeleton();
-  const filterEnr = STU.cls || STU.sec || STU.year;
+  const filterEnr = isTeacher() || STU.cls || STU.sec || STU.year;
   let q = sb.from('students').select(`*, enrollments${filterEnr ? '!inner' : ''}(id,academic_year_id,class_id,section_id), student_guardians(guardians(full_name,phone))`, { count: 'exact' }).eq('school_id', S.school.id);
   const s = sanitizeQ(STU.q);
   if (s) q = q.or(`full_name.ilike.%${s}%,admission_no.ilike.%${s}%,phone.ilike.%${s}%`);
