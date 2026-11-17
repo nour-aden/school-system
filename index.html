@@ -1129,6 +1129,14 @@ async function loadStudents() {
   if (STU.cls) q = q.eq('enrollments.class_id', STU.cls);
   if (STU.sec) q = q.eq('enrollments.section_id', STU.sec);
   if (STU.year) q = q.eq('enrollments.academic_year_id', STU.year);
+   if (isTeacher()) {
+  const ids = [...new Set(myAsg().map(a => a.section_id).filter(Boolean))];
+  if (!ids.length) {
+    box.innerHTML = emptyState(t('no_students'));
+    return;
+  }
+  q = q.in('enrollments.section_id', ids);
+   }
   const { data, error, count } = await q.order('full_name').order('id').range((STU.page - 1) * PAGE_SIZE, STU.page * PAGE_SIZE - 1);
   if (error) { box.innerHTML = `<div class="card-pad"><div class="alert err">${esc(errMsg(error))}</div></div>`; return; }
   const urls = await photoUrls(data.map(r => r.photo_path));
