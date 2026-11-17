@@ -783,10 +783,11 @@ async function loadLookups() {
 async function loadTeacherCtx() {
   S.teacher = null;
   if (!isTeacher()) return;
-  const { data } = await sb.from('teachers').select('*, teacher_assignments(*)').eq('school_id', S.school.id).eq('user_id', S.user.id).maybeSingle();
+  const { data, error } = await sb.from('teachers').select('*, teacher_assignments(*)').eq('school_id', S.school.id).eq('user_id', S.user.id).maybeSingle();
   S.teacher = data || { teacher_assignments: [] };
-   console.log('TEACHER ASSIGNMENTS:', S.teacher.teacher_assignments);
-}
+console.log('TEACHER ERROR:', error);
+console.log('TEACHER ASSIGNMENTS:', S.teacher.teacher_assignments);
+   }
 async function refreshStats() {
   try {
     const { data, error } = await sb.rpc('dashboard_stats', { p_school: S.school.id });
