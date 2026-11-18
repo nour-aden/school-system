@@ -1012,14 +1012,58 @@ function alertItems() {
   if (isTeacher() && !myAsg().length) a.push({ icon: 'alert', tone: 'amber', text: t('n_no_assign'), href: '#/dashboard' });
   return a;
 }
-function updateBell() { const d = $('#bell-dot'); if (!d) return; const n = alertItems().length; d.hidden = !n; d.textContent = n; }
-function renderBell() {
-  const al = alertItems();
-  $('#bell-menu').innerHTML = `<div class="menu-head"><b>${t('notifications')}</b></div>
-   ${al.map(x => `<a class="notif" href="${x.href}"><span class="ni tone-${x.tone}">${ic(x.icon, 16)}</span><span>${esc(x.text)}</span></a>`).join('')}
-   ${S.log.slice(0, 5).map(x => `<div class="notif"><span class="ni tone-green">${ic('check', 16)}</span><span>${esc(x.msg)}<br><span class="muted small">${esc(new Date(x.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }))}</span></span></div>`).join('')}
-   ${!al.length && !S.log.length ? `<div class="empty small">${t('no_notifications')}</div>` : ''}`;
+async function updateBell() {
+  const d = $('#bell-dot');
+  if (!d) return;
+
+  const { count, error } = await sb
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('school_id', S.school.id)
+    .eq('is_read', false)
+    .or(`user_id.is.null,user_id.eq.${S.user.id}`);
+
+  if (error) {
+    console.error('Notifications:', error);
+    return;
+  }
+
+  const n = (count || 0) + alertItems().length;
+  d.hidden = !n;
+  d.textContent = n > 99 ? '99+' : n;
 }
+
+async function renderBell() {
+  const menu = $('#bell-menu');
+  if (!menu) return;
+
+  const { data, error } = await sb
+    .from('notifications')
+    .select('*')
+    .eq('school_id', S.school.id)
+    .or(`user_id.is.null,user_id.eq.${S.user.id}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error(error);
+    menu.innerHTML = `<div class="empty small">Notifications could not load.</div>`;
+    return;
+  }
+
+  const al = alertItems();
+
+  menu.innerHTML = `<div class="menu-head"><b>${t('notifications')}</b></div>
+    ${al.map(x => `<a class="notif" href="${x.href}">
+      <span class="ni tone-${x.tone}">${ic(x.icon,16)}</span>
+      <span>${esc(x.text)}</span></a>`).join('')}
+    ${(data || []).map(x => `<div class="notif">
+      <span class="ni tone-${x.is_read ? 'green' : 'amber'}">${ic(x.is_read ? 'check' : 'bell',16)}</span>
+      <span><b>${esc(x.title)}</b><br>${esc(x.message)}
+      <br><span class="muted small">${esc(new Date(x.created_at).toLocaleString())}</span></span>
+    </div>`).join('')}
+    ${!al.length && !data?.length ? `<div class="empty small">${t('no_notifications')}</div>` : ''}`;
+   }
 
 function markNav() { $$('.nav-item').forEach(a => a.classList.toggle('active', a.dataset.route === S.route)); const r = ROUTES.find(x => x.id === S.route); const pt = $('#page-title'); if (pt && r) pt.textContent = t('nav_' + r.id); }
 async function route() {
