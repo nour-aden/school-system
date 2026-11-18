@@ -450,10 +450,36 @@ const defaultTerm = () => { const ts = termsOfYear(); return (ts.find(x => x.sta
 const ROUTES = [{ id: 'home', icon: 'home', fn: async () => { await renderHome(); await homeHero(); } }, { id: 'attendance', icon: 'calendar', fn: () => renderAttendance() },
   { id: 'marks', icon: 'award', fn: () => renderMarks() }, { id: 'students', icon: 'users', fn: () => renderStudents() }];
 function renderShell() {
-  $('#boot').hidden = true; $('#auth').hidden = true; $('#app').hidden = false;
-  $('#topbar').innerHTML = `<div class="brand">${schoolLogo(36)}<div style="min-width:0"><b>${esc(S.school.short_name || S.school.name)}</b><span>${esc(S.teacher.full_name)}</span></div></div>${langSwitch()}<button class="icon-btn" data-act="profile" aria-label="${t('profile')}"><span class="avatar">${esc(initials(S.teacher.full_name))}</span></button>`;
-  $('#tabbar').innerHTML = ROUTES.map(r => `<a href="#/${r.id}" data-route="${r.id}" class="${S.route === r.id ? 'on' : ''}">${ic(r.icon, 20)}<span>${t('nav_' + r.id)}</span></a>`).join('');
-}
+  $('#boot').hidden = true;
+  $('#auth').hidden = true;
+  $('#app').hidden = false;
+
+  $('#topbar').innerHTML = `
+    <div class="brand">
+      ${schoolLogo(36)}
+      <div style="min-width:0">
+        <b>${esc(S.school.short_name || S.school.name)}</b>
+        <span>${esc(S.teacher.full_name)}</span>
+      </div>
+    </div>
+    ${langSwitch()}
+    <div class="menu-wrap">
+      <button class="icon-btn" data-act="menu" data-id="bell-menu" aria-label="${t('notifications')}">
+        ${ic('bell', 20)}
+        <span class="dot" id="bell-dot" hidden></span>
+      </button>
+      <div class="menu wide" id="bell-menu" hidden></div>
+    </div>
+    <button class="icon-btn" data-act="profile" aria-label="${t('profile')}">
+      <span class="avatar">${esc(initials(S.teacher.full_name))}</span>
+    </button>`;
+
+  $('#tabbar').innerHTML = ROUTES.map(r =>
+    `<a href="#/${r.id}" data-route="${r.id}" class="${S.route === r.id ? 'on' : ''}">
+      ${ic(r.icon, 20)}<span>${t('nav_' + r.id)}</span>
+    </a>`
+  ).join('');
+                                         }
 function lockdown() { S.ready = false; S.user = null; S.teacher = null; S.school = null; S.perms = []; S.asg = []; S.students = []; S.enr = []; window.__dirty = false;
   ['#view', '#topbar', '#tabbar', '#modal-root'].forEach(x => { const e = $(x); if (e) e.innerHTML = ''; }); $('#app').hidden = true; }
 async function route() {
