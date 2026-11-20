@@ -154,7 +154,7 @@ const totalTeachers = L.reduce((n, s) => n + Number(s.teachers || 0), 0);
   <div class="stat"><b>${totalStudents}</b><span>${t('allstudents')}</span></div>
   <div class="stat"><b>${totalTeachers}</b><span>${t('allteachers')}</span></div>
   <div class="stat"><b>${attention}</b><span>${t('attention')}</span></div>
-</div>
+</div>`;
   const qi = $('#q'); qi.oninput = () => { S.q = qi.value; const pos = qi.selectionStart; draw(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
 }
 
