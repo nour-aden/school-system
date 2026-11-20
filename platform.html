@@ -139,6 +139,8 @@ function effStatus(s) { const d = daysLeft(s); return (s.status === 'active' || 
 
 function draw() {
   const L = S.schools, q = S.q.trim().toLowerCase();
+  const totalStudents = L.reduce((n, s) => n + Number(s.students || 0), 0);
+const totalTeachers = L.reduce((n, s) => n + Number(s.teachers || 0), 0);
   const eff = L.map(effStatus);
   const attention = L.filter((s, i) => eff[i] === 'suspended' || eff[i] === 'expired' || (daysLeft(s) !== null && daysLeft(s) <= 14 && daysLeft(s) > 0)).length;
   const list = L.filter(s => !q || (s.name + ' ' + (s.short_name || '') + ' ' + (s.admin_emails || '')).toLowerCase().includes(q));
