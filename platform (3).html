@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Platform Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f3f5fb;--surface:#fff;--surface2:#f8f9fe;--ink:#0f172a;--ink2:#475569;--ink3:#94a3b8;--line:#e4e8f3;--blue:#2563eb;--blue-d:#1d4ed8;--blue-l:#eaf1ff;--violet:#7c3aed;--navy:#0b1544;--green:#15803d;--green-l:#e3f6ea;--red:#dc2626;--red-l:#fdecec;--amber:#b45309;--amber-l:#fff3dc;--slate-l:#eef1f7;--radius:16px;--shadow:0 1px 2px rgba(15,23,42,.04),0 8px 28px rgba(30,41,90,.07);--grad:linear-gradient(135deg,#2563eb,#7c3aed);--side:264px;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color-scheme:light}
+:root[data-theme=dark]{--bg:#0a1030;--surface:#121a42;--surface2:#0f1638;--ink:#e8ecfb;--ink2:#a9b4da;--ink3:#6c78a8;--line:#222c5c;--blue:#5b8cff;--blue-d:#7aa2ff;--blue-l:#1b2a66;--green:#4ade80;--green-l:#12351f;--red:#f87171;--red-l:#3b1520;--amber:#fbbf24;--amber-l:#3a2a0c;--slate-l:#1a2352;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.35);color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+svg{display:block;flex:none}
+h1,h2,h3,h4{margin:0}
+/* shell */
+.shell{display:flex;min-height:100vh}
+.side{width:var(--side);background:linear-gradient(185deg,#0b1544 0%,#16276f 55%,#2b1a73 100%);color:#dfe6ff;position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;z-index:40;transition:transform .25s ease}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 18px 14px}
+.brand .lg{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 18px rgba(124,58,237,.45)}
+.brand b{font-size:15px;color:#fff;display:block;line-height:1.2}.brand span{font-size:11.5px;opacity:.7}
+.nav{flex:1;overflow-y:auto;padding:6px 10px 16px}
+.nav h6{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;opacity:.5;margin:16px 10px 6px;font-weight:700}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;color:#cfd8ff;text-decoration:none;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s,transform .15s;margin-bottom:2px}
+.nav a:hover{background:rgba(255,255,255,.08)}
+.nav a.on{background:linear-gradient(90deg,rgba(91,140,255,.35),rgba(124,58,237,.3));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.nav a .bd{margin-left:auto;background:#ef4444;color:#fff;border-radius:99px;font-size:11px;padding:1px 7px;font-weight:700}
+.main{flex:1;margin-left:var(--side);min-width:0}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:12px 22px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar .ttl{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{border:1px solid var(--line);background:var(--surface);width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:var(--ink2);position:relative;transition:transform .15s,box-shadow .15s}
+.ib:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.ib .dt{position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;border-radius:99px;font-size:10.5px;padding:0 5px;min-width:17px;text-align:center;font-weight:700}
+.gs{flex:1;max-width:420px;position:relative;margin-left:8px}
+.gs input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 12px 9px 36px;outline:none}
+.gs input:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent)}
+.gs .si{position:absolute;left:11px;top:10px;color:var(--ink3)}
+.gsr{position:absolute;top:44px;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);max-height:60vh;overflow:auto;z-index:50;padding:6px}
+.gsr a{display:flex;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13.5px}.gsr a:hover{background:var(--slate-l)}.gsr small{color:var(--ink3);margin-left:auto}
+.sp{flex:1}
+.menu{position:absolute;right:0;top:46px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:210px;padding:6px;z-index:60}
+.menu a,.menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink)}
+.menu a:hover,.menu button:hover{background:var(--slate-l)}
+.av{width:38px;height:38px;border-radius:12px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;cursor:pointer;border:0}
+.content{padding:22px;max-width:1320px;margin:0 auto;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.scrim{display:none}
+/* components */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:7px;transition:transform .12s,box-shadow .12s,background .12s;white-space:nowrap}
+.btn:hover{background:var(--slate-l)}.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(91,70,230,.3)}.btn-primary:hover{background:var(--grad);filter:brightness(1.07)}
+.btn-danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 35%,var(--line))}.btn-ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,var(--line))}
+.btn-sm{padding:6px 10px;font-size:13px;border-radius:10px}.btn[disabled]{opacity:.55;cursor:wait}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;min-width:0;border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.card h3{font-size:15.5px;letter-spacing:-.01em}.muted{color:var(--ink2);font-size:13px}.tiny{font-size:12px;color:var(--ink3)}
+.pg-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}.pg-head h2{font-size:22px;letter-spacing:-.02em}.pg-head p{margin:2px 0 0;color:var(--ink2);font-size:13.5px}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g21{grid-template-columns:2fr 1fr}
+.kpi{display:flex;gap:13px;align-items:center;position:relative;overflow:hidden;transition:transform .15s}.kpi:hover{transform:translateY(-2px)}
+.kpi .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none}
+.kpi b{font-size:24px;letter-spacing:-.02em;display:block;line-height:1.15}.kpi span{font-size:12.5px;color:var(--ink2)}.kpi small{display:block;font-size:11.5px;color:var(--ink3)}
+.i-blue{background:linear-gradient(135deg,#3b82f6,#2563eb)}.i-violet{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}.i-green{background:linear-gradient(135deg,#22c55e,#15803d)}.i-red{background:linear-gradient(135deg,#f87171,#dc2626)}.i-amber{background:linear-gradient(135deg,#fbbf24,#d97706)}.i-navy{background:linear-gradient(135deg,#334fb4,#0b1544)}.i-teal{background:linear-gradient(135deg,#2dd4bf,#0f766e)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.c-active,.c-verified,.c-resolved,.c-success{background:var(--green-l);color:var(--green)}.c-trial,.c-open,.c-info,.c-normal{background:var(--blue-l);color:var(--blue)}
+.c-suspended,.c-rejected,.c-danger,.c-urgent,.c-failed{background:var(--red-l);color:var(--red)}.c-expired,.c-pending,.c-grace,.c-warning,.c-high{background:var(--amber-l);color:var(--amber)}.c-refunded,.c-low,.c-unknown{background:var(--slate-l);color:var(--ink2)}
+.bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.bar input,.bar select{border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--surface);outline:none;min-width:0}
+.bar input[type=search]{flex:1;min-width:170px}
+.fg{margin-bottom:12px;min-width:0}.fg label{display:block;font-size:13px;font-weight:700;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);outline:none}
+.fg textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 20%,transparent)}
+.hint{font-size:12.5px;color:var(--ink2);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{background:var(--red-l);color:var(--red);padding:10px 12px;border-radius:12px;font-size:14px;margin-bottom:12px}
+.note{background:var(--blue-l);color:var(--ink);border-radius:12px;padding:11px 13px;font-size:13.5px;margin-bottom:14px;display:flex;gap:10px}
+.note.warn{background:var(--amber-l)}.note.bad{background:var(--red-l)}.note.good{background:var(--green-l)}
+.empty{text-align:center;color:var(--ink2);padding:42px 12px}.empty .ei{width:64px;height:64px;border-radius:20px;background:var(--blue-l);color:var(--blue);display:grid;place-items:center;margin:0 auto 12px}
+.sk{background:linear-gradient(90deg,var(--slate-l),var(--surface2),var(--slate-l));background-size:200% 100%;animation:sk 1.2s infinite;border-radius:12px;height:84px}@keyframes sk{to{background-position:-200% 0}}
+/* table */
+.tw{overflow-x:auto;border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);padding:11px 12px;border-bottom:1px solid var(--line);background:var(--surface2);white-space:nowrap;user-select:none}
+th.s{cursor:pointer}th.s:hover{color:var(--blue)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}tbody tr:hover td{background:color-mix(in srgb,var(--blue-l) 45%,transparent)}
+td.r,th.r{text-align:right}.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pager{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:12px 4px 2px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;background:var(--surface);padding:5px;border-radius:14px;border:1px solid var(--line);overflow-x:auto;margin-bottom:14px;width:fit-content;max-width:100%}
+.tab{border:0;background:none;padding:8px 14px;font-weight:700;color:var(--ink2);border-radius:10px;cursor:pointer;white-space:nowrap}.tab.on{background:var(--grad);color:#fff}
+.list .it{display:flex;gap:12px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line)}.list .it:last-child{border:0}
+.it .dot{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}
+.it .tx{flex:1;min-width:0}.it .tx b{display:block;overflow:hidden;text-overflow:ellipsis}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:14px}.kv dt{color:var(--ink2)}.kv dd{margin:0;word-break:break-word}
+.chart text{fill:var(--ink3);font-size:10.5px}.chart .gl{stroke:var(--line)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-top:8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.pb{height:8px;background:var(--slate-l);border-radius:99px;overflow:hidden}.pb i{display:block;height:100%;background:var(--grad)}
+.acc{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:var(--surface);overflow:hidden}
+.acc summary{padding:14px 16px;font-weight:700;cursor:pointer;list-style:none;display:flex;gap:10px;align-items:center}.acc summary::-webkit-details-marker{display:none}
+.acc div.b{padding:0 16px 14px;color:var(--ink2);font-size:14px}.acc ol,.acc ul{margin:6px 0;padding-left:20px}
+.msgs{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:40vh;overflow:auto}.msg{background:var(--slate-l);padding:10px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap}.msg small{display:block;color:var(--ink3);margin-bottom:2px}
+/* modal */
+.back{position:fixed;inset:0;background:rgba(8,12,40,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:80;padding:16px;animation:fade .15s}
+.modal{background:var(--surface);width:100%;max-width:560px;border-radius:22px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(8,12,40,.45);overflow:hidden}.modal.lg{max-width:860px}
+.mh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);flex:none}.mh h2{font-size:18px;flex:1}
+.mb{padding:18px 20px;overflow-y:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain}
+.mf{display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);margin:16px -20px -18px;padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0f172a;color:#fff;padding:11px 18px;border-radius:12px;z-index:120;font-size:14px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:fade .2s}.toast.bad{background:#b91c1c}
+/* login */
+.login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.login .art{background:linear-gradient(160deg,#0b1544,#1d3a9e 60%,#5b21b6);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.login .art h1{font-size:34px;letter-spacing:-.03em;line-height:1.15}.login .art p{opacity:.8;max-width:420px}
+.login .frm{display:grid;place-items:center;padding:24px}.login .frm .card{width:100%;max-width:380px;padding:26px}
+/* docs */
+.doc{background:#fff;color:#111;border:1px solid #ddd;border-radius:10px;padding:28px;font-size:13.5px}
+.doc h1{font-size:22px;margin:0 0 2px}.doc table{margin:14px 0}.doc th{background:#f3f4f6;color:#333}.doc td,.doc th{border-bottom:1px solid #e5e7eb}
+.doc .hd{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid #1e3a8a;padding-bottom:12px;margin-bottom:12px}
+.doc .stamp{display:inline-block;border:3px solid #15803d;color:#15803d;font-weight:800;padding:2px 14px;border-radius:8px;transform:rotate(-6deg);letter-spacing:.1em}.doc .stamp.un{border-color:#b45309;color:#b45309}
+#print-root{display:none}.mob{display:none}@media(max-width:900px){.mob{display:grid}}
+@media print{body>*:not(#print-root){display:none!important}#print-root{display:block}body{background:#fff}.doc{border:0}}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g21{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){
+  .side{transform:translateX(-100%)}.side.open{transform:none;box-shadow:0 0 60px rgba(0,0,0,.5)}
+  .scrim.open{display:block;position:fixed;inset:0;background:rgba(8,12,40,.5);z-index:35}
+  .main{margin-left:0}.content{padding:14px}.topbar{padding:10px 12px}.gs{display:none}.gs.show{display:block;position:absolute;left:12px;right:12px;top:58px;max-width:none;margin:0}
+  .login{grid-template-columns:1fr}.login .art{display:none}
+}
+@media(max-width:720px){
+  .g4,.g3,.g2{grid-template-columns:1fr 1fr}.kpi{padding:14px}.kpi b{font-size:20px}.kpi .ico{width:40px;height:40px}.row2{grid-template-columns:1fr}
+  .topbar .ttl{font-size:16px}.kv{grid-template-columns:1fr}.kv dt{font-size:12px}
+  table.st thead{display:none}table.st,table.st tbody,table.st tr,table.st td{display:block;width:100%}
+  table.st tr{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;padding:6px 4px;background:var(--surface)}
+  table.st td{border:0;display:flex;justify-content:space-between;gap:12px;padding:6px 10px;text-align:right}
+  table.st td::before{content:attr(data-l);color:var(--ink2);font-size:12px;font-weight:700;text-align:left;flex:none}
+  table.st td.acts-c{justify-content:flex-end}table.st td.acts-c::before{display:none}
+  .modal{border-radius:0;max-width:none;height:100vh;height:100dvh;max-height:none}.back{padding:0}
+}
+@media(max-width:720px){.list .it{flex-wrap:wrap}.list .it .tx{flex:1 1 55%}}
+@media(max-width:440px){.g4,.g3,.g2{grid-template-columns:1fr}.topbar [data-m=quick]{display:none}.topbar [data-menu]:has([data-m=quick]){display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="print-root"></div>
+<script>
+const I = {
+en: {
+ title:'Platform Console', console:'Super Admin Console', login:'Sign in', email:'Email', pass:'Password', out:'Sign out', notallowed:'This account is not allowed. This console is for super admins only.', err_network:'Network problem. Check your internet and try again.',
+ login_hero:'Run your whole school business from one place.', login_sub:'Schools, subscriptions, payments, invoices, support and security for your School Management SaaS.',
+ setup_title:'Database update needed', setup_sub:'The console needs the Super Admin v2 SQL files.', setup_body:'Open Supabase > SQL Editor and run 12a, then 12b, then 12c (one at a time). Then sign in again.',
+ grp_main:'Overview', grp_money:'Billing', grp_manage:'Manage', grp_system:'System',
+ nav_dashboard:'Dashboard', nav_schools:'Schools', nav_subs:'Subscriptions', nav_plans:'Plans & Pricing', nav_pay:'Payments', nav_inv:'Invoices & Receipts', nav_users:'Users & Roles', nav_notif:'Notifications', nav_reports:'Reports & Analytics', nav_support:'Support Center', nav_logs:'Activity Logs', nav_backup:'Backup & Recovery', nav_sec:'Security Center', nav_settings:'System Settings', nav_profile:'My Profile', nav_help:'Help & Documentation',
+ gsearch:'Search schools, payments, tickets...', quick:'Quick actions', theme:'Theme', close:'Close', cancel:'Cancel', save:'Save', saved:'Saved', ok:'Done', yes:'Yes', confirm:'Please confirm', open:'Open', view:'View', edit:'Edit', del:'Delete', create:'Create', created:'Created', refresh:'Refresh', send:'Send', remove:'Remove', reply:'Reply', message:'Message', name:'Name', note:'Note', date:'Date', time:'Time', total:'Total', count:'Count', month:'Month', status:'Status', type:'Type', plan:'Plan', school:'School', schools:'Schools', students:'Students', teachers:'Teachers', amount:'Amount', currency:'Currency', method:'Method', reference:'Reference', reason:'Reason', details:'Details', action:'Action', actor:'Actor', system:'System', phone:'Phone', address:'Address', from:'From', to:'To', never:'Never', info:'Information', description:'Description', location:'Location', updated:'Updated', category:'Category', priority:'Priority', subject:'Subject', role:'Role', you:'You', registered:'Registered', last_act:'Last activity', admins:'Admin', active:'Active', inactive:'Inactive', no_data:'No data yet.', no_match:'Nothing matches your filters.', verify:'Verify', reject:'Reject', refund:'Refund', renew:'Renew', pay:'Payment', payment:'Payment',
+ st_active:'Active', st_trial:'Trial', st_grace:'Grace period', st_expired:'Expired', st_suspended:'Suspended', ps_pending:'Pending', ps_verified:'Verified', ps_rejected:'Rejected', ps_refunded:'Refunded',
+ m_cash:'Cash', m_bank_transfer:'Bank transfer', m_telebirr:'Telebirr', m_cbe_birr:'CBE Birr', m_mobile_money:'Mobile money', m_other:'Other', m_n:'{n} month(s)', m_0:'Do not extend', m1:'+1 month', y1:'+1 year',
+ monthly:'Monthly', annual:'Annual', monthly_s:'month', annual_s:'year', t_p:'Primary', t_s:'Secondary', t_ps:'Primary + Secondary',
+ tc_general:'General', tc_billing:'Billing', tc_technical:'Technical', tc_account:'Account', tc_training:'Training', tc_other:'Other', tp_low:'Low', tp_normal:'Normal', tp_high:'High', tp_urgent:'Urgent', ts_open:'Open', ts_pending:'Pending', ts_resolved:'Resolved',
+ dash_sub:'Live numbers from your database.', k_total:'Schools', k_active:'Active schools', k_trial_n:'{n} on trial', k_susp:'Suspended', k_expired:'Expired', k_grace_n:'{n} in grace period', k_students:'Students (all schools)', k_teachers:'Teachers (all schools)', k_month:'Revenue this month', k_year:'Revenue this year', k_pending:'Pending payments', k_expiring:'Expiring in 14 days',
+ ch_revenue:'Revenue, last 12 months', ch_status:'School status', ch_reg:'New schools, last 12 months', ch_plans:'Schools by plan', alerts:'Important alerts', alerts_none:'Nothing needs attention.', al_pending:'{n} payment(s) waiting for verification', al_noadmin:'This school has no administrator', recent_pay:'Recent payments', recent:'Recent activity', no_pay:'No payments yet.', no_log:'No activity yet.',
+ schools_sub:'Register, edit and manage every school.', search_schools:'Search schools...', all_status:'All statuses', all_plans:'All plans', all_schools:'All schools', all_methods:'All methods', all_actions:'All actions', all_category:'All categories', all_priority:'All priorities', all_docs:'All documents', newschool:'New school', none_schools:'No schools yet', none_schools_sub:'Tap "New school" to register the first one.', n_name:'School name', n_short:'Short name', n_lang:'Language', n_email:'Admin email', n_email_h:'The user must already exist: Supabase > Authentication > Users > Add user.', edit_school:'Edit school', addadmin:'Add admin', added:'Admin added', subscription:'Subscription', cycle:'Billing', ends:'Subscription ends', grace:'Grace period', grace_days:'{n} day(s)', grace_h:'Days a school keeps access after the end date before it expires.', noexp:'No expiry', daysleft:'{n} days left', expired_on:'Ended {d}', editsub:'Subscription', suspend:'Suspend', activate:'Activate', custom_period:'Choose any end date for a custom period.', confirm_susp:'Suspend "{n}"? Its users cannot sign in until you reactivate it.',
+ pay_history:'Payment history', support_hist:'Support history', status_hist:'Status & subscription history', no_tickets:'No tickets.', sub_history:'Subscription history',
+ subs_sub:'Plans, end dates, grace periods and renewals.', subs_note:'Access is checked in the database on every request, so an expired school is locked out automatically. A verified renewal reactivates it.', only_expiring:'Ending within 30 days', confirm_ext:'Extend "{n}" by {m} month(s)?', ext_audit:'Manual extensions are written to the activity log.',
+ plans_sub:'Create plans and set prices. Prices are used to suggest the payment amount.', new_plan:'New plan', plan_code:'Code', plan_code_h:'Lowercase letters, numbers, - or _ (cannot be changed later).', price_m:'Price per month', price_a:'Price per year', limit_students:'Student limit', limit_teachers:'Teacher limit', unlimited:'Unlimited', sort:'Order', features:'Features', features_h:'One feature per line.', schools_using:'{n} school(s) use this plan', no_plans:'No plans yet.', confirm_delplan:'Delete plan "{n}"?',
+ pay_sub:'Record, verify and reconcile payments.', recpay:'Record payment', search_pay:'Search reference, invoice, school...', paid_on:'Payment date', months:'Extend subscription by', ref_h:'Bank / Telebirr / CBE transaction number. Required for non-cash payments.', verify_now:'I have checked this payment (bank statement or cash received). Verify it now.', pay_warn:'The subscription is only extended after the payment is verified.', pay_saved:'Payment recorded (pending verification)', pay_verified:'Payment verified', confirm_verify:'Verify {a} from {s}?', verify_extends:'The subscription will be extended by {n} month(s).', refund_rollback:'Also take back the {n} month(s) from the subscription', confirm_delpay:'Delete this unverified payment record?', invoice_no:'Invoice no.', receipt_no:'Receipt no.', recorded_by:'Recorded by', verified_by:'Verified by', reconcile:'Reconciliation by method', reconcile_h:'Verified and pending totals for the payments currently filtered.',
+ inv_sub:'Print or save invoices and receipts as PDF.', invoice:'Invoice', receipt:'Receipt', print_pdf:'Print / Save PDF', bill_to:'Bill to', period:'Period', pay_instr:'How to pay', stamp_paid:'PAID', stamp_unpaid:'UNPAID', only_invoices:'Invoices only (not paid)', no_docs:'No invoices yet.',
+ users_sub:'Super admin accounts of this platform.', users_note:'Anyone listed here has full access to every school. Create the user first in Supabase, then add the email here.', add_staff:'Add super admin', role_super:'Super Admin', last_login:'Last login', revoke:'Revoke', confirm_revoke:'Remove super admin access from {e}?', school_admins:'School administrators', school_admins_h:'Each school\'s administrators are managed from the school (Schools > View > Add admin).',
+ notif_sub:'Reminders and alerts generated automatically.', email_note:'Notifications appear here. Email delivery is not configured yet (it needs an email service).', mark_all:'Mark all as read', only_unread:'Only unread', no_notif:'No notifications.',
+ reports_sub:'Revenue, growth and subscription reports with export.', r_revenue:'Revenue', r_growth:'School growth', r_status:'Active / expired', r_subs:'Subscriptions', r_payments:'Payments', r_outstanding:'Outstanding', p_month:'This month', p_lastmonth:'Last month', p_year:'This year', p_last12:'Last 12 months', p_all:'All time', p_custom:'Custom period', avg_pay:'Average payment', new_in_period:'New schools in period', new_schools:'New schools', with_access:'With access', expiring_30:'Ending in the next 30 days', pend_pay:'Pending payments', overdue_schools:'Expired / in grace period', last_payment:'Last payment', days_over:'{n} day(s) overdue',
+ support_sub:'Tickets from schools, with conversations and history.', new_ticket:'New ticket', search_tickets:'Search tickets...',
+ logs_sub:'Every important action, with who did it and when.', search_logs:'Search the log...', a_login:'Signed in', a_logout:'Signed out', a_school_created:'School created', a_school_updated:'School updated', a_subscription:'Subscription changed', a_admin_added:'Admin added', a_payment:'Payment recorded', a_payment_verified:'Payment verified', a_payment_rejected:'Payment rejected', a_payment_refunded:'Payment refunded', a_payment_deleted:'Payment deleted', a_grace_changed:'Grace period changed', a_auto_expired:'Expired automatically', a_plan_saved:'Plan saved', a_settings:'Settings changed', a_ticket_created:'Ticket created', a_ticket_status:'Ticket status changed', a_backup_logged:'Backup logged', a_staff_changed:'Super admin changed',
+ backup_sub:'Backup record and recovery guide.', bk_honest_t:'Read this first', bk_honest:'The real backups are made by Supabase, not by this console, and this console cannot read them. This table is a record that you keep by hand. Only mark a restore as tested after you really restored a backup into a test project. On the Supabase Free plan there are no automatic backups; use the Pro plan for daily backups.', log_backup:'Log a backup', export_data:'Export data (CSV)', last_backup:'Last successful backup', last_restore_test:'Last restore test', none_logged:'None logged', no_backups:'No backups logged yet.', bk_manual:'Manual', bk_automatic:'Automatic', bs_success:'Success', bs_failed:'Failed', bs_unknown:'Unknown', restore_tested:'Restore tested', mark_tested:'Mark tested', restore_done:'I restored this backup into a test project and checked the data.', confirm_tested:'Confirm that you really restored this backup and checked the data?',
+ dr_title:'Disaster recovery steps', dr_1:'Open Supabase > Database > Backups and pick the most recent good backup.', dr_2:'Restore it into a NEW test project first (never over production).', dr_3:'Check schools, students, payments and logins in the test project.', dr_4:'If correct, restore to production (or switch the app URL and key to the restored project).', dr_5:'Sign in to this console and review Security Center and Activity Logs.', dr_6:'Write the date and result in the backup log above.',
+ sec_sub:'Live checks of your database security.', sec_checks:'Security checks', sec_live:'These results are read from your database right now.', sc_pass:'OK', sc_warn:'Warning', sc_fail:'Problem', sc_none:'None', sc_rls:'Row Level Security on all tables', sc_rls_ok:'All {n} tables are protected by RLS ({p} policies).', sc_rls_bad:'Tables without RLS: {l}', sc_anon_t:'Anonymous access to tables', sc_anon_f:'Anonymous access to functions', sc_admins:'Super admin accounts', sc_admins_d:'{n} super admin(s). Two or more is safer.', sc_noadmin:'Schools without an administrator', sc_mfa:'Two-factor authentication for you', sc_mfa_on:'Enabled.', sc_mfa_off:'Not enabled. Turn it on in My Profile.', sc_key:'Secret keys', sc_key_d:'This console only uses the public publishable key. No service key is in the browser.', login_history:'Login history', logins_7d:'{n} in the last 7 days', failed_note:'Failed sign-in attempts are recorded by Supabase (Authentication > Logs), not here.', signout_others:'Sign out other sessions', confirm_signout_others:'Sign out every other device that is signed in to your account?', sec_info:'What protects the platform', si_1:'Every platform action runs in the database and checks that you are a super admin.', si_2:'Each school can only see its own data (school_id isolation with RLS).', si_3:'Verified payments cannot be deleted, only refunded, and every change is logged.', si_4:'Expired and suspended schools are locked out by the database, not by the browser.',
+ settings_sub:'Company details, defaults and billing text.', set_platform:'Company', set_pname:'Platform name', set_cname:'Company name', set_defaults:'Defaults', set_tz:'Timezone', set_trial:'Trial days', set_grace:'Default grace days', set_reminder:'Reminder days before expiry', set_reminder_h:'Example: 14,7,3', set_maint:'Maintenance note', set_billing:'Billing', set_payinstr:'Payment instructions', set_payinstr_h:'Printed on invoices (bank account, Telebirr number...).', set_footer:'Invoice footer', set_local:'This device', set_local_h:'Language and theme are saved in this browser.',
+ profile_sub:'Your account and security.', new_email:'New email', change_email:'Change email', email_change_h:'A confirmation link is sent by email.', email_sent:'Check your email to confirm.', change_pw:'Change password', new_pw:'New password', confirm_pw:'Repeat password', pw_mismatch:'Passwords do not match.', pw_changed:'Password changed.', sessions:'Sessions', sessions_h:'Sign out every other device.', mfa:'Two-factor authentication', mfa_h:'Use an authenticator app (Google Authenticator, Authy...). This console asks for the code when you sign in. If you also ran SQL file 12d, the database itself refuses super admin actions until the code is entered.', mfa_enable:'Enable 2FA', mfa_scan:'Scan this QR code with your authenticator app, then enter the 6-digit code.', mfa_code:'6-digit code', mfa_on:'Two-factor authentication enabled.', mfa_remove_confirm:'Remove two-factor authentication?', mfa_title:'Two-factor verification', mfa_login_h:'Enter the code from your authenticator app.',
+ help_sub:'How to run the platform.', h1_t:'Register a new school', h1_b:'<ol><li>Supabase > Authentication > Users > Add user (the school admin email and a password).</li><li>Here: Schools > New school, type the same email.</li><li>Give the admin the school link and password.</li></ol>', h2_t:'Receive and verify a payment', h2_b:'<ol><li>Payments > Record payment (school, months, amount, method, reference).</li><li>The payment stays Pending and the school is not extended.</li><li>Check the bank / Telebirr / CBE statement, then press Verify. The subscription is extended and a receipt number is created.</li></ol>', h3_t:'Plans and pricing', h3_b:'Create plans under Plans & Pricing. When you record a payment, the suggested amount comes from the plan price. Limits are shown on the school profile.', h4_t:'Expiry, grace period and reminders', h4_b:'A school keeps access until the end date plus its grace days. After that the database blocks it and this console marks it Expired. Reminders appear in Notifications at the days set in Settings. A verified renewal reactivates the school.', h5_t:'Automatic checks every hour (optional)', h5_b:'The console runs the expiry check whenever you open it. To run it every hour even when nobody is signed in, enable the pg_cron extension in Supabase and run: <code>select cron.schedule(\'platform-scan\', \'0 * * * *\', \'select public.platform_scan()\');</code>', h6_t:'Invoices and receipts', h6_b:'Invoices & Receipts lists every document. Press Print / Save PDF and choose "Save as PDF" in the print window. Fill in company details and payment instructions in Settings first.', h7_t:'Backups', h7_b:'Use the Supabase Pro plan for daily backups. Record each backup in Backup & Recovery and test a restore into a separate project at least once.', h8_t:'Help a school', h8_b:'Open Support Center > New ticket to record a school\'s problem, reply, and set it to Pending or Resolved. Each school profile shows its ticket history.',
+ sl_login:'Login', sl_title:'School login (username & password)', sl_help:'The username is the admin\'s e-mail. Fill only what you want to change. The password is never shown again, so give it to the school safely.', sl_current:'Current admin', sl_none:'No admin yet. Enter an e-mail and a password to create one.', sl_pick:'Which admin?', sl_email:'New username (e-mail)', sl_pwd:'New password', sl_gen:'Generate', sl_show:'Show', sl_hide:'Hide', sl_copy:'Copy', sl_copied:'Copied', sl_save:'Save login', sl_done:'Login saved. Give the new details to the school.', sl_nothing:'Enter a new e-mail or a new password.', sl_weak:'The password must be 8 to 72 characters.', sl_bad_email:'Enter a valid e-mail.', sl_taken:'This e-mail is already used by another account.', sl_forbidden:'Not allowed.', sl_need_both:'A new admin needs both an e-mail and a password.', sl_choose:'This school has several admins. Choose one.', sl_nosvc:'The service "school-account" is not deployed yet. Deploy the Edge Function first.', sl_failed:'Could not save the login.'
+}
+,
+so: {
+ title:'Console-ka Platform-ka', console:'Console-ka Super Admin', login:'Gal', email:'Email', pass:'Erayga sirta ah', out:'Ka bax', notallowed:'Akoonkan ma haysto ogolaansho. Console-kan waa kan super admin kaliya.', err_network:'Dhibaato internet. Hubi xiriirkaaga oo isku day mar kale.',
+ login_hero:'Ganacsigaaga dugsiyada ka maamul hal meel.', login_sub:'Dugsiyada, rukhsadaha, lacagaha, invoice-yada, taageerada iyo amniga System-kaaga School Management.',
+ setup_title:'Database-ka waa in la cusboonaysiiyaa', setup_sub:'Console-ku wuxuu u baahan yahay faylasha SQL ee Super Admin v2.', setup_body:'Fur Supabase > SQL Editor oo ku fuli 12a, kadib 12b, kadib 12c (mid mid). Kadib mar kale gal.',
+ grp_main:'Guud', grp_money:'Lacagaha', grp_manage:'Maamul', grp_system:'Nidaamka',
+ nav_dashboard:'Dashboard', nav_schools:'Dugsiyada', nav_subs:'Rukhsadaha', nav_plans:'Plans & Qiimaha', nav_pay:'Lacagaha', nav_inv:'Invoice & Rasiidh', nav_users:'Isticmaalayaasha', nav_notif:'Ogaysiisyada', nav_reports:'Warbixinno', nav_support:'Taageero', nav_logs:'Hawlaha', nav_backup:'Backup & Soo celin', nav_sec:'Xarunta Amniga', nav_settings:'Dejinta', nav_profile:'Akoonkayga', nav_help:'Caawimaad',
+ gsearch:'Raadi dugsi, lacag, ticket...', quick:'Hawlo degdeg ah', theme:'Midabka', close:'Xidh', cancel:'Jooji', save:'Keydi', saved:'Waa la keydiyay', ok:'Waa la sameeyay', yes:'Haa', confirm:'Fadlan xaqiiji', open:'Fur', view:'Eeg', edit:'Wax ka beddel', del:'Tirtir', create:'Abuur', created:'Waa la abuuray', refresh:'Cusboonaysii', send:'Dir', remove:'Ka saar', reply:'Jawaab', message:'Fariin', name:'Magac', note:'Faallo', date:'Taariikh', time:'Waqti', total:'Wadar', count:'Tiro', month:'Bil', status:'Xaalad', type:'Nooc', plan:'Plan', school:'Dugsi', schools:'Dugsiyada', students:'Arday', teachers:'Macallimiin', amount:'Lacag', currency:'Lacagta nooca', method:'Habka', reference:'Tixraac', reason:'Sabab', details:'Faahfaahin', action:'Hawl', actor:'Qofka', system:'Nidaam', phone:'Telefoon', address:'Cinwaan', from:'Laga bilaabo', to:'Ilaa', never:'Weligii', info:'Macluumaad', description:'Sharaxaad', location:'Goob', updated:'La cusboonaysiiyay', category:'Qaybta', priority:'Mudnaanta', subject:'Mowduuc', role:'Doorka', you:'Adiga', registered:'La diiwaangeliyay', last_act:'Hawshii ugu dambaysay', admins:'Maamule', active:'Firfircoon', inactive:'Aan firfircoonayn', no_data:'Weli xog ma jirto.', no_match:'Wax ku habboon ma jiraan.', verify:'Xaqiiji', reject:'Diid', refund:'Celi lacagta', renew:'Cusboonaysii', pay:'Lacag', payment:'Lacag',
+ st_active:'Firfircoon', st_trial:'Tijaabo', st_grace:'Muddo deeq', st_expired:'Dhammaaday', st_suspended:'Xidhan', ps_pending:'Sugaya', ps_verified:'La xaqiijiyay', ps_rejected:'La diiday', ps_refunded:'La celiyay',
+ m_cash:'Cash', m_bank_transfer:'Bangi', m_telebirr:'Telebirr', m_cbe_birr:'CBE Birr', m_mobile_money:'Mobile money', m_other:'Mid kale', m_n:'{n} bil', m_0:'Ha kordhin', m1:'+1 bil', y1:'+1 sano',
+ monthly:'Bille', annual:'Sannadle', monthly_s:'bil', annual_s:'sano', t_p:'Hoose', t_s:'Sare', t_ps:'Hoose + Sare',
+ tc_general:'Guud', tc_billing:'Lacag', tc_technical:'Farsamo', tc_account:'Akoon', tc_training:'Tababar', tc_other:'Kale', tp_low:'Hoose', tp_normal:'Caadi', tp_high:'Sare', tp_urgent:'Degdeg', ts_open:'Furan', ts_pending:'Sugaya', ts_resolved:'La xalliyay',
+ dash_sub:'Tirooyin toos ah oo ka yimid database-kaaga.', k_total:'Dugsiyada', k_active:'Dugsiyada firfircoon', k_trial_n:'{n} tijaabo', k_susp:'Xidhan', k_expired:'Dhammaaday', k_grace_n:'{n} muddo deeq', k_students:'Ardayda (dhammaan)', k_teachers:'Macallimiinta (dhammaan)', k_month:'Dakhliga bishan', k_year:'Dakhliga sanadkan', k_pending:'Lacago sugaya', k_expiring:'Dhammaanaya 14 maalmood',
+ ch_revenue:'Dakhliga, 12-kii bilood ee la soo dhaafay', ch_status:'Xaaladda dugsiyada', ch_reg:'Dugsiyo cusub, 12 bilood', ch_plans:'Dugsiyada iyadoo loo eegayo plan', alerts:'Digniino muhiim ah', alerts_none:'Wax dareen u baahan ma jiraan.', al_pending:'{n} lacag ayaa sugaysa xaqiijin', al_noadmin:'Dugsigan maamule ma lahan', recent_pay:'Lacagihii ugu dambeeyay', recent:'Hawlihii ugu dambeeyay', no_pay:'Weli lacag ma jirto.', no_log:'Weli hawl ma jirto.',
+ schools_sub:'Diiwaangeli, wax ka beddel oo maamul dugsi kasta.', search_schools:'Raadi dugsi...', all_status:'Xaalad kasta', all_plans:'Plan kasta', all_schools:'Dugsi kasta', all_methods:'Habab kasta', all_actions:'Hawl kasta', all_category:'Qayb kasta', all_priority:'Mudnaan kasta', all_docs:'Dhammaan dukumentiyada', newschool:'Dugsi cusub', none_schools:'Weli dugsi ma jiro', none_schools_sub:'Riix "Dugsi cusub" si aad kan koowaad u diiwaangeliso.', n_name:'Magaca dugsiga', n_short:'Magaca gaaban', n_lang:'Luqadda', n_email:'Email-ka maamulaha', n_email_h:'User-ku hore ayuu u jiray: Supabase > Authentication > Users > Add user.', edit_school:'Wax ka beddel dugsiga', addadmin:'Ku dar maamule', added:'Maamulaha waa lagu daray', subscription:'Rukhsad', cycle:'Bixinta', ends:'Rukhsad dhammaata', grace:'Muddo deeq', grace_days:'{n} maalmood', grace_h:'Maalmaha dugsigu helayo gelitaan ka dib taariikhda dhammaadka ka hor inta uusan dhammaan.', noexp:'Wakhti xaddid ma leh', daysleft:'{n} maalmood ayaa hadhay', expired_on:'Dhammaaday {d}', editsub:'Rukhsad', suspend:'Xidh', activate:'Fur', custom_period:'Dooro taariikh kasta oo dhammaad ah.', confirm_susp:'Ma xidhaa "{n}"? Dadkiisa ma geli karaan ilaa aad dib u furto.',
+ pay_history:'Taariikhda lacagaha', support_hist:'Taariikhda taageerada', status_hist:'Taariikhda xaaladda & rukhsadda', no_tickets:'Ticket ma jiro.', sub_history:'Taariikhda rukhsadda',
+ subs_sub:'Plans, taariikhaha dhammaadka, muddo deeq iyo cusboonaysiin.', subs_note:'Gelitaanka waxaa lagu hubiyaa database-ka codsi kasta, sidaas darteed dugsiga dhammaaday si toos ah ayaa loo xidhaa. Cusboonaysiin la xaqiijiyay ayaa dib u furaysa.', only_expiring:'Dhammaanaya 30 maalmood gudahood', confirm_ext:'Ma kordhisaa "{n}" {m} bil?', ext_audit:'Kordhinta gacanta waxaa lagu qoraa diiwaanka hawlaha.',
+ plans_sub:'Abuur plans oo deji qiimaha. Qiimuhu wuxuu soo jeediyaa lacagta.', new_plan:'Plan cusub', plan_code:'Koodh', plan_code_h:'Xarfo yaryar, tiro, - ama _ (dib looma beddeli karo).', price_m:'Qiimaha bishii', price_a:'Qiimaha sannadkii', limit_students:'Xadka ardayda', limit_teachers:'Xadka macallimiinta', unlimited:'Aan xad lahayn', sort:'Hormarin', features:'Astaamaha', features_h:'Hal astaan sadar kasta.', schools_using:'{n} dugsi ayaa isticmaala', no_plans:'Weli plan ma jiro.', confirm_delplan:'Tirtir plan-ka "{n}"?',
+ pay_sub:'Diiwaangeli, xaqiiji oo is-waafaji lacagaha.', recpay:'Diiwaan geli lacag', search_pay:'Raadi tixraac, invoice, dugsi...', paid_on:'Taariikhda lacagta', months:'Kordhi rukhsadda', ref_h:'Lambarka macaamilka Bangiga / Telebirr / CBE. Waa loo baahan yahay lacag aan cash ahayn.', verify_now:'Waan hubiyay lacagtan (bayaan bangi ama cash la helay). Hadda xaqiiji.', pay_warn:'Rukhsadda lama kordhiyo ilaa lacagta la xaqiijiyo.', pay_saved:'Lacagta waa la diiwaangeliyay (sugaysa xaqiijin)', pay_verified:'Lacagta waa la xaqiijiyay', confirm_verify:'Xaqiiji {a} oo ka timid {s}?', verify_extends:'Rukhsadda waxaa lagu kordhin doonaa {n} bil.', refund_rollback:'Sidoo kale ka qaad {n} bil rukhsadda', confirm_delpay:'Tirtir diiwaankan lacag aan la xaqiijin?', invoice_no:'Invoice lam.', receipt_no:'Rasiidh lam.', recorded_by:'Diiwaangeliyay', verified_by:'Xaqiijiyay', reconcile:'Is-waafajin habka lacag-bixinta', reconcile_h:'Wadarta la xaqiijiyay iyo sugaysa ee lacagaha hadda la sifeeyay.',
+ inv_sub:'Daabac ama kaydi invoice iyo rasiidh PDF ahaan.', invoice:'Invoice', receipt:'Rasiidh', print_pdf:'Daabac / Kaydi PDF', bill_to:'Lacagta laga rabo', period:'Muddo', pay_instr:'Sida loo bixiyo', stamp_paid:'LA BIXIYAY', stamp_unpaid:'LAMA BIXIN', only_invoices:'Invoice kaliya (aan la bixin)', no_docs:'Weli invoice ma jiro.',
+ users_sub:'Akoonnada super admin ee platform-kan.', users_note:'Qof kasta oo halkan ku qoran wuxuu haystaa gelitaan buuxa oo dugsi kasta. Marka hore user ka abuur Supabase, kadib halkan ku dar email-ka.', add_staff:'Ku dar super admin', role_super:'Super Admin', last_login:'Gelitaankii ugu dambeeyay', revoke:'Ka qaad', confirm_revoke:'Ka qaad gelitaanka super admin {e}?', school_admins:'Maamulayaasha dugsiyada', school_admins_h:'Maamulayaasha dugsi kasta waxaa laga maamulaa dugsiga (Dugsiyada > Eeg > Ku dar maamule).',
+ notif_sub:'Xusuusin iyo digniino si toos ah loo abuuray.', email_note:'Ogaysiisyada halkan ayay ka muuqdaan. Email-ka weli lama dejin (wuxuu u baahan yahay adeeg email).', mark_all:'Dhammaan u calaamadee la akhriyay', only_unread:'Kuwa aan la akhriyin oo keliya', no_notif:'Ogaysiis ma jiro.',
+ reports_sub:'Warbixinnada dakhliga, kobaca iyo rukhsadaha oo la dhoofin karo.', r_revenue:'Dakhli', r_growth:'Kobaca dugsiyada', r_status:'Firfircoon / dhammaaday', r_subs:'Rukhsadaha', r_payments:'Lacagaha', r_outstanding:'Dhimman', p_month:'Bishan', p_lastmonth:'Bishii hore', p_year:'Sanadkan', p_last12:'12-kii bilood', p_all:'Dhammaan', p_custom:'Muddo kale', avg_pay:'Celceliska lacagta', new_in_period:'Dugsiyo cusub muddada', new_schools:'Dugsiyo cusub', with_access:'Gelitaan leh', expiring_30:'Dhammaanaya 30-ka maalmood ee soo socda', pend_pay:'Lacago sugaya', overdue_schools:'Dhammaaday / muddo deeq', last_payment:'Lacagtii ugu dambaysay', days_over:'{n} maalmood ka dambeeyay',
+ support_sub:'Ticket-yada dugsiyada, wada hadal iyo taariikh.', new_ticket:'Ticket cusub', search_tickets:'Raadi ticket...',
+ logs_sub:'Hawl kasta oo muhiim ah, qofka sameeyay iyo goorta.', search_logs:'Ka raadi diiwaanka...', a_login:'Wuu galay', a_logout:'Wuu baxay', a_school_created:'Dugsi la abuuray', a_school_updated:'Dugsi la beddelay', a_subscription:'Rukhsad la beddelay', a_admin_added:'Maamule la daray', a_payment:'Lacag la diiwaangeliyay', a_payment_verified:'Lacag la xaqiijiyay', a_payment_rejected:'Lacag la diiday', a_payment_refunded:'Lacag la celiyay', a_payment_deleted:'Lacag la tirtiray', a_grace_changed:'Muddo deeq la beddelay', a_auto_expired:'Si toos ah ayuu u dhammaaday', a_plan_saved:'Plan la keydiyay', a_settings:'Dejin la beddelay', a_ticket_created:'Ticket la abuuray', a_ticket_status:'Xaaladda ticket la beddelay', a_backup_logged:'Backup la diiwaangeliyay', a_staff_changed:'Super admin la beddelay',
+ backup_sub:'Diiwaanka backup iyo hagaha soo celinta.', bk_honest_t:'Marka hore akhri', bk_honest:'Backup-yada dhabta ah waxaa sameeya Supabase, ma aha console-kan, console-kuna ma akhriyi karo. Shaxdan waa diiwaan aad gacanta ku keydiso. Soo celin u calaamadee tijaabin kaliya marka aad dhab ahaan backup ugu soo celisay mashruuc tijaabo. Supabase Free ma laha backup toos ah; isticmaal Pro si aad u hesho backup maalinle.', log_backup:'Diiwaan geli backup', export_data:'Dhoofi xogta (CSV)', last_backup:'Backup guulaystay ugu dambeeyay', last_restore_test:'Tijaabadii soo celinta ugu dambaysay', none_logged:'Lama diiwaangelin', no_backups:'Weli backup lama diiwaangelin.', bk_manual:'Gacan', bk_automatic:'Toos', bs_success:'Guul', bs_failed:'Fashil', bs_unknown:'Aan la ogayn', restore_tested:'Soo celin la tijaabiyay', mark_tested:'U calaamadee tijaabay', restore_done:'Backup-kan waxaan ku soo celiyay mashruuc tijaabo oo xogta ayaan hubiyay.', confirm_tested:'Ma xaqiijisaa inaad dhab ahaan backup-kan soo celisay oo xogta hubisay?',
+ dr_title:'Tallaabooyinka soo celinta musiibada', dr_1:'Fur Supabase > Database > Backups oo dooro backup-kii ugu dambeeyay ee fiicnaa.', dr_2:'Marka hore ku soo celi mashruuc tijaabo ah OO CUSUB (weligaa ha dul soo celin production).', dr_3:'Hubi dugsiyada, ardayda, lacagaha iyo gelitaannada mashruuca tijaabada.', dr_4:'Haddii sax yihiin, ku soo celi production (ama beddel URL-ka iyo furaha app-ka).', dr_5:'Gal console-kan oo eeg Xarunta Amniga iyo Hawlaha.', dr_6:'Qor taariikhda iyo natiijada diiwaanka backup ee kor.',
+ sec_sub:'Hubin toos ah oo amniga database-kaaga.', sec_checks:'Hubinta amniga', sec_live:'Natiijooyinkan waxaa hadda laga akhriyay database-kaaga.', sc_pass:'Wanaagsan', sc_warn:'Digniin', sc_fail:'Dhibaato', sc_none:'Midna', sc_rls:'Row Level Security miiska oo dhan', sc_rls_ok:'Dhammaan {n} miis waa ilaaliyaa RLS ({p} siyaasadood).', sc_rls_bad:'Miisas aan RLS lahayn: {l}', sc_anon_t:'Gelitaanka qofka aan soo gelin ee miisaska', sc_anon_f:'Gelitaanka qofka aan soo gelin ee function-nada', sc_admins:'Akoonnada super admin', sc_admins_d:'{n} super admin. Laba ama in ka badan ayaa ka badbaado badan.', sc_noadmin:'Dugsiyo aan maamule lahayn', sc_mfa:'Xaqiijinta laba-tallaabo ee adiga', sc_mfa_on:'Waa shaqeynaysaa.', sc_mfa_off:'Lama shidin. Ka shid Akoonkayga.', sc_key:'Furayaasha sirta ah', sc_key_d:'Console-kan wuxuu isticmaalaa furaha dadweynaha oo keliya. Furaha service browser-ka kuma jiro.', login_history:'Taariikhda gelitaanka', logins_7d:'{n} 7-dii maalmood ee la soo dhaafay', failed_note:'Isku-dayada gelitaan ee fashilmay waxaa diiwaangeliya Supabase (Authentication > Logs), ma aha halkan.', signout_others:'Ka saar goobaha kale', confirm_signout_others:'Ka saar qalab kasta oo kale oo ku jira akoonkaaga?', sec_info:'Waxa ilaaliya platform-ka', si_1:'Hawl kasta oo platform ah waxay ka shaqeysaa database-ka oo hubisaa inaad tahay super admin.', si_2:'Dugsi kasta wuxuu arkaa xogtiisa oo keliya (go\'doomin school_id ee RLS).', si_3:'Lacagaha la xaqiijiyay lama tirtiri karo, waa la celin karaa oo keliya, isbeddel kastana waa la diiwaangeliyaa.', si_4:'Dugsiyada dhammaaday iyo xidhan waxaa xidha database-ka, ma aha browser-ka.',
+ settings_sub:'Faahfaahinta shirkadda, dejinno iyo qoraalka lacagaha.', set_platform:'Shirkadda', set_pname:'Magaca platform-ka', set_cname:'Magaca shirkadda', set_defaults:'Dejinno caadi ah', set_tz:'Gobolka waqtiga', set_trial:'Maalmaha tijaabada', set_grace:'Maalmaha deeqda caadiga ah', set_reminder:'Maalmaha xusuusinta ka hor dhammaadka', set_reminder_h:'Tusaale: 14,7,3', set_maint:'Faallo dayactir', set_billing:'Lacagaha', set_payinstr:'Tilmaamaha lacag-bixinta', set_payinstr_h:'Waxaa lagu daabacaa invoice-yada (akoonka bangiga, lambarka Telebirr...).', set_footer:'Hoosta invoice-ka', set_local:'Qalabkan', set_local_h:'Luqadda iyo midabka waxaa lagu keydiyaa browser-kan.',
+ profile_sub:'Akoonkaaga iyo amniga.', new_email:'Email cusub', change_email:'Beddel email', email_change_h:'Isku xiriir xaqiijin ah ayaa email lagugu soo diraa.', email_sent:'Hubi email-kaaga si aad u xaqiijiso.', change_pw:'Beddel erayga sirta', new_pw:'Erayga sirta cusub', confirm_pw:'Ku celi erayga sirta', pw_mismatch:'Erayada sirta ah isma laha.', pw_changed:'Erayga sirta waa la beddelay.', sessions:'Goobaha furan', sessions_h:'Ka saar qalab kasta oo kale.', mfa:'Xaqiijinta laba-tallaabo', mfa_h:'Isticmaal app xaqiijin (Google Authenticator, Authy...). Console-kan wuxuu weydiiyaa koodhka marka aad gasho. Haddii aad sidoo kale fuliso SQL 12d, database-kii laftiisu wuu diidayaa hawlaha super admin ilaa koodhka la galiyo.', mfa_enable:'Shid 2FA', mfa_scan:'Iskaan garee QR-kan app-kaaga, kadib geli koodhka 6-god ah.', mfa_code:'Koodh 6-god ah', mfa_on:'Xaqiijinta laba-tallaabo waa la shiday.', mfa_remove_confirm:'Ka saar xaqiijinta laba-tallaabo?', mfa_title:'Xaqiijin laba-tallaabo', mfa_login_h:'Geli koodhka app-kaaga xaqiijinta.',
+ help_sub:'Sida loo maamulo platform-ka.', h1_t:'Diiwaangeli dugsi cusub', h1_b:'<ol><li>Supabase > Authentication > Users > Add user (email-ka maamulaha dugsiga iyo password).</li><li>Halkan: Dugsiyada > Dugsi cusub, geli isla email-kaas.</li><li>Maamulaha sii link-ga dugsiga iyo password-ka.</li></ol>', h2_t:'Helitaanka iyo xaqiijinta lacag', h2_b:'<ol><li>Lacagaha > Diiwaan geli lacag (dugsi, bilo, lacag, habka, tixraac).</li><li>Lacagtu waxay ahaanaysaa Sugaya, dugsigana lama kordhiyo.</li><li>Hubi bayaanka bangiga / Telebirr / CBE, kadib riix Xaqiiji. Rukhsaddu way kordhaysaa oo lambar rasiidh ayaa la abuurayaa.</li></ol>', h3_t:'Plans iyo qiimaha', h3_b:'Abuur plans gudaha Plans & Qiimaha. Marka aad lacag diiwaangeliso, lacagta la soo jeediyay waxay ka timaaddaa qiimaha plan-ka. Xadka waxaa lagu arkaa profile-ka dugsiga.', h4_t:'Dhammaad, muddo deeq iyo xusuusin', h4_b:'Dugsigu wuxuu haystaa gelitaan ilaa taariikhda dhammaadka oo lagu daray maalmaha deeqda. Kadib database-ku wuu xidhaa, console-kuna wuxuu u calaamadeeyaa Dhammaaday. Xusuusinta waxay ka muuqataa Ogaysiisyada maalmaha lagu dejiyay Dejinta. Cusboonaysiin la xaqiijiyay ayaa dib u furta dugsiga.', h5_t:'Hubin toos ah saacad kasta (ikhtiyaari)', h5_b:'Console-ku wuxuu fuliyaa hubinta marka aad furto. Si loo fuliyo saacad kasta xitaa marka qofna uusan gelin, shid pg_cron gudaha Supabase oo ku fuli: <code>select cron.schedule(\'platform-scan\', \'0 * * * *\', \'select public.platform_scan()\');</code>', h6_t:'Invoice iyo rasiidh', h6_b:'Invoice & Rasiidh waxay liis garayaan dukumenti kasta. Riix Daabac / Kaydi PDF oo ka dooro "Save as PDF" daaqadda daabacaadda. Marka hore geli faahfaahinta shirkadda iyo tilmaamaha lacag-bixinta ee Dejinta.', h7_t:'Backup', h7_b:'Isticmaal Supabase Pro si aad u hesho backup maalinle. Diiwaangeli backup kasta Backup & Soo celin, mar ugu yaraan tijaabi soo celin mashruuc gooni ah.', h8_t:'Caawi dugsi', h8_b:'Fur Taageero > Ticket cusub si aad u diiwaangeliso dhibaatada dugsiga, jawaab, oo ka dhig Sugaya ama La xalliyay. Profile-ka dugsi kastaa wuxuu tusaa taariikhda ticket-yadiisa.',
+ sl_login:'Gelitaan', sl_title:'Gelitaanka dugsiga (username & password)', sl_help:'Username-ku waa iimeylka maamulaha. Buuxi waxa aad rabto inaad beddesho oo keliya. Password-ka mar dambe lama muujiyo, sidaa darteed si ammaan ah ugu sii dugsiga.', sl_current:'Maamulaha hadda', sl_none:'Weli maamule ma jiro. Geli iimeyl iyo password si aad u abuurto.', sl_pick:'Maamulaha kee?', sl_email:'Username cusub (iimeyl)', sl_pwd:'Password cusub', sl_gen:'Samee', sl_show:'Muuji', sl_hide:'Qari', sl_copy:'Koobi', sl_copied:'La koobiyay', sl_save:'Kaydi gelitaanka', sl_done:'Gelitaanka waa la kaydiyay. U sii dugsiga faahfaahinta cusub.', sl_nothing:'Geli iimeyl cusub ama password cusub.', sl_weak:'Password-ku waa inuu ahaadaa 8 ilaa 72 xaraf.', sl_bad_email:'Geli iimeyl sax ah.', sl_taken:'Iimeylkan waxaa horey u isticmaalaya akoon kale.', sl_forbidden:'Lagama oggola.', sl_need_both:'Maamule cusub wuxuu u baahan yahay iimeyl iyo password labadaba.', sl_choose:'Dugsigani wuxuu leeyahay maamulayaal dhowr ah. Dooro mid.', sl_nosvc:'Adeegga "school-account" weli lama rakibin. Marka hore deploy garee Edge Function-ka.', sl_failed:'Gelitaanka lama kaydin karin.'
+}
+};
+const SUPABASE_URL = "https://bfozghbwpyspotpblcyr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AkI4NAyrbLlnvmMiAfPaUQ_vO6C8UqJ";
+const LS = { get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
+let LANG = LS.get('pl_lang', 'so');
+const t = (k, v) => String((I[LANG] && I[LANG][k]) ?? I.en[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => v && v[x] != null ? v[x] : '');
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const authStore = (() => { try { sessionStorage.setItem('_t', '1'); sessionStorage.removeItem('_t'); return sessionStorage; } catch (e) { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = v; }, removeItem: k => { delete m[k]; } }; } })();
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: authStore, storageKey: 'platform-console-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }) : null;
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const DAY = 86400000, TZ = 'Africa/Addis_Ababa';
+const S = { page: 'dashboard', schools: [], pays: [], logs: [], plans: [], notifs: [], settings: {}, tickets: [], backups: [], staff: [], sec: null, me: null, f: {}, menu: null, nav: false, gq: '', report: 'revenue', loaded: false };
+const F = id => S.f[id] || (S.f[id] = { q: '', page: 1 });
+const app = $('#app');
+
+/* ---------- formatting ---------- */
+const fdate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: TZ }) : '—';
+const ftime = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ }) : '—';
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+const num = n => Number(n || 0).toLocaleString('en-US');
+const money = (n, c) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (c ? ' ' + c : '');
+const cur = () => S.settings.currency || 'ETB';
+const sumBy = list => { const m = {}; list.forEach(p => { m[p.currency] = (m[p.currency] || 0) + Number(p.amount); }); const k = Object.keys(m); return k.length ? k.map(c => money(m[c], c)).join(' · ') : money(0, cur()); };
+const sumCur = (list, c) => list.filter(p => p.currency === c).reduce((a, p) => a + Number(p.amount), 0);
+const initials = s => String(s || '?').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
+const addMonths = (iso, m) => { const base = iso && new Date(iso) > new Date() ? new Date(iso) : new Date(); base.setMonth(base.getMonth() + m); return base.toISOString(); };
+const toDateInput = iso => iso ? new Date(iso).toLocaleDateString('en-CA', { timeZone: TZ }) : '';
+const endOfDay = d => d ? new Date(d + 'T23:59:59+03:00').toISOString() : null;
+
+/* ---------- icons ---------- */
+const P = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  school: '<path d="M3 10l9-6 9 6"/><path d="M5 10v9h14v-9"/><path d="M9 19v-5h6v5"/>',
+  repeat: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/>',
+  tag: '<path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
+  file: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  users: '<path d="M17 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8"/>',
+  bell: '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  life: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
+  activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 114 2c-1 .8-1.5 1.2-1.5 2.5M12 17h.01"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>',
+  logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>', x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  print: '<path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>',
+  download: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+  trash: '<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>',
+  refresh: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', trend: '<path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>', mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>', send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>'
+};
+const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ''}</svg>`;
+
+/* ---------- ui helpers ---------- */
+function toast(msg, bad) { const d = document.createElement('div'); d.className = 'toast' + (bad ? ' bad' : ''); d.setAttribute('role', 'status'); d.textContent = msg; document.body.appendChild(d); setTimeout(() => d.remove(), 3800); }
+const errTxt = e => { const m = (e && e.message) ? e.message : String(e); return /Failed to fetch|NetworkError|Load failed/i.test(m) ? t('err_network') : m; };
+function closeModal() { $$('.back').forEach(x => x.remove()); }
+function modal(title, body, o = {}) {
+  closeModal(); const b = document.createElement('div'); b.className = 'back';
+  b.innerHTML = `<div class="modal ${o.lg ? 'lg' : ''}" role="dialog" aria-modal="true"><div class="mh"><h2>${title}</h2><button class="ib" data-act="close" aria-label="${esc(t('close'))}">${ic('x')}</button></div><div class="mb">${body}</div></div>`;
+  b.addEventListener('mousedown', e => { if (e.target === b) closeModal(); }); document.body.appendChild(b); return b;
+}
+const foot = (ok, extra = '') => `<div class="mf">${extra}<button type="button" class="btn" data-act="close">${t('cancel')}</button><button class="btn btn-primary" data-ok>${ok || t('save')}</button></div>`;
+async function busy(btn, fn) { if (btn) btn.disabled = true; try { return await fn(); } finally { if (btn) btn.disabled = false; } }
+const rpc = async (name, args) => { const { data, error } = await sb.rpc(name, args || {}); if (error) throw error; return data; };
+async function run(btn, fn, okMsg) { return busy(btn, async () => { try { const r = await fn(); if (okMsg) toast(okMsg); return r === undefined ? true : r; } catch (e) { console.error(e); toast(errTxt(e), true); return false; } }); }
+function confirmBox(msg, o = {}) {
+  return new Promise(res => {
+    const m = modal(esc(o.title || t('confirm')), `<p style="margin:0 0 4px">${esc(msg)}</p>${o.extra || ''}${foot(esc(o.ok || t('yes')))}`);
+    if (o.danger) $('[data-ok]', m).classList.add('btn-danger');
+    let done = false; const fin = v => { if (!done) { done = true; closeModal(); res(v); } };
+    $('[data-ok]', m).onclick = () => fin(true); m.addEventListener('click', e => { if (e.target.closest('[data-act=close]') || e.target === m) fin(false); }, true);
+  });
+}
+const chip = (cls, label) => `<span class="chip c-${esc(cls)}">${esc(label)}</span>`;
+const stChip = s => chip(s, t('st_' + s));
+const payChip = s => chip(s, t('ps_' + s));
+const empty = (icon, title, sub) => `<div class="empty card"><div class="ei">${ic(icon, 30)}</div><b>${esc(title)}</b>${sub ? `<div class="muted" style="margin-top:4px">${esc(sub)}</div>` : ''}</div>`;
+const skeleton = () => `<div class="grid g4">${'<div class="sk"></div>'.repeat(4)}</div><div class="grid g2" style="margin-top:14px">${'<div class="sk" style="height:220px"></div>'.repeat(2)}</div>`;
+const pageHead = (title, sub, actions = '') => `<div class="pg-head"><div style="flex:1;min-width:200px"><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div><div class="acts" style="justify-content:flex-start">${actions}</div></div>`;
+const opts = (list, sel) => list.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(sel) ? 'selected' : ''}>${esc(l)}</option>`).join('');
+
+/* ---------- CSV / print ---------- */
+function downloadCSV(name, rows) {
+  const q = v => { v = v == null ? '' : String(v); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const blob = new Blob(['﻿' + rows.map(r => r.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '-' + today() + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function printHTML(html) { const r = $('#print-root'); r.innerHTML = html; setTimeout(() => { window.print(); setTimeout(() => { r.innerHTML = ''; }, 800); }, 50); }
+
+/* ---------- tables ---------- */
+function table(id, cols, rows, o = {}) {
+  const st = F(id), size = o.size || 10; let list = rows;
+  if (st.sort) { const c = cols.find(x => x.k === st.sort); if (c && c.v) list = [...rows].sort((a, b) => { const x = c.v(a) ?? '', y = c.v(b) ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * (st.dir || 1); }); }
+  const pages = Math.max(1, Math.ceil(list.length / size)); st.page = Math.min(Math.max(1, st.page || 1), pages);
+  const from = (st.page - 1) * size, slice = list.slice(from, from + size);
+  if (!rows.length) return o.empty || '';
+  return `<div class="card" style="padding:6px 10px 12px"><div class="tw"><table class="st"><thead><tr>${cols.map(c => `<th class="${c.v ? 's' : ''} ${c.r ? 'r' : ''}" ${c.v ? `data-act="sort" data-t="${id}" data-k="${c.k}"` : ''}>${esc(c.l)}${st.sort === c.k ? (st.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+    <tbody>${slice.map(r => `<tr>${cols.map(c => `<td data-l="${esc(c.l)}" class="${c.r ? 'r' : ''} ${c.acts ? 'acts-c' : ''}">${c.h(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="pager"><span class="muted">${from + 1}–${Math.min(from + size, list.length)} / ${list.length}</span><span class="acts"><button class="btn btn-sm" data-act="pg" data-t="${id}" data-d="-1" ${st.page <= 1 ? 'disabled' : ''}>‹</button><span class="muted" style="align-self:center">${st.page}/${pages}</span><button class="btn btn-sm" data-act="pg" data-t="${id}" data-d="1" ${st.page >= pages ? 'disabled' : ''}>›</button></span></div></div>`;
+}
+
+/* ---------- charts (inline SVG, theme aware) ---------- */
+function barChart(vals, labels, o = {}) {
+  const W = 560, H = o.h || 190, pad = { l: 8, r: 8, t: 14, b: 24 }, max = Math.max(...vals, 1), bw = (W - pad.l - pad.r) / vals.length;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(o.label || '')}"><defs><linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+    ${[0, .5, 1].map(f => `<line class="gl" x1="${pad.l}" x2="${W - pad.r}" y1="${pad.t + (H - pad.t - pad.b) * f}" y2="${pad.t + (H - pad.t - pad.b) * f}"/>`).join('')}
+    ${vals.map((v, i) => { const h = (H - pad.t - pad.b) * v / max, x = pad.l + i * bw + bw * .18; return `<rect x="${x}" y="${H - pad.b - h}" width="${bw * .64}" height="${Math.max(h, v > 0 ? 2 : 0)}" rx="5" fill="url(#bg1)"><title>${esc(labels[i])}: ${o.fmt ? o.fmt(v) : num(v)}</title></rect><text x="${x + bw * .32}" y="${H - 8}" text-anchor="middle">${esc(labels[i].slice(o.cut ?? 5))}</text>`; }).join('')}</svg>`;
+}
+function lineChart(vals, labels, o = {}) {
+  const W = 560, H = o.h || 190, pad = { l: 10, r: 10, t: 14, b: 24 }, max = Math.max(...vals, 1), step = (W - pad.l - pad.r) / Math.max(vals.length - 1, 1);
+  const pts = vals.map((v, i) => [pad.l + i * step, H - pad.b - (H - pad.t - pad.b) * v / max]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(o.label || '')}"><defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".35"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+    ${[0, .5, 1].map(f => `<line class="gl" x1="${pad.l}" x2="${W - pad.r}" y1="${pad.t + (H - pad.t - pad.b) * f}" y2="${pad.t + (H - pad.t - pad.b) * f}"/>`).join('')}
+    <path d="${d} L${pts[pts.length - 1][0]} ${H - pad.b} L${pts[0][0]} ${H - pad.b} Z" fill="url(#lg1)"/><path d="${d}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#fff" stroke="#2563eb" stroke-width="2"><title>${esc(labels[i])}: ${num(vals[i])}</title></circle>${i % 2 === 0 || vals.length < 8 ? `<text x="${p[0]}" y="${H - 8}" text-anchor="middle">${esc(labels[i].slice(5))}</text>` : ''}`).join('')}</svg>`;
+}
+function donut(parts, o = {}) {
+  const tot = parts.reduce((a, p) => a + p.v, 0), R = 52, C = 2 * Math.PI * R; let acc = 0;
+  const segs = tot ? parts.filter(p => p.v > 0).map(p => { const len = C * p.v / tot, s = `<circle r="${R}" cx="70" cy="70" fill="none" stroke="${p.c}" stroke-width="18" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}" transform="rotate(-90 70 70)"><title>${esc(p.l)}: ${p.v}</title></circle>`; acc += len; return s; }).join('') : `<circle r="${R}" cx="70" cy="70" fill="none" stroke="var(--line)" stroke-width="18"/>`;
+  return `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><svg viewBox="0 0 140 140" width="150" role="img" aria-label="${esc(o.label || '')}">${segs}<text x="70" y="68" text-anchor="middle" style="font-size:24px;font-weight:800;fill:var(--ink)">${tot}</text><text x="70" y="86" text-anchor="middle" style="font-size:10px;fill:var(--ink3)">${esc(o.center || '')}</text></svg>
+    <div class="legend" style="flex-direction:column;margin:0;gap:6px">${parts.map(p => `<span><i style="background:${p.c}"></i>${esc(p.l)}: <b>${p.v}</b></span>`).join('')}</div></div>`;
+}
+
+/* ---------- subscription helpers ---------- */
+const endsAt = s => s.subscription_ends_at ? new Date(s.subscription_ends_at) : null;
+const daysLeft = s => endsAt(s) ? Math.ceil((endsAt(s) - Date.now()) / DAY) : null;
+function effStatus(s) {
+  if (s.status === 'active' || s.status === 'trial') { const e = endsAt(s); if (e) { const ge = e.getTime() + (s.grace_days || 0) * DAY; if (ge <= Date.now()) return 'expired'; if (e <= Date.now()) return 'grace'; } }
+  return s.status;
+}
+function subLine(s) {
+  const d = daysLeft(s); if (d === null) return t('noexp');
+  return d > 0 ? `${fdate(s.subscription_ends_at)} · ${t('daysleft', { n: d })}` : t('expired_on', { d: fdate(s.subscription_ends_at) });
+}
+const byId = id => S.schools.find(s => s.id === id);
+const planName = c => { const p = S.plans.find(x => x.code === c); return p ? p.name : (c || '—'); };
+const accessOK = s => ['active', 'trial', 'grace'].includes(effStatus(s));
+const unread = () => S.notifs.filter(n => !n.is_read).length;
+const alertSchools = () => S.schools.filter(s => { const e = effStatus(s), d = daysLeft(s); return e === 'expired' || e === 'grace' || ((e === 'active' || e === 'trial') && d !== null && d <= 14); }).sort((a, b) => (daysLeft(a) ?? 9999) - (daysLeft(b) ?? 9999));
+const logsOf = id => S.logs.filter(l => l.school_id === id);
+const VIEW = {}, PRE = {}, ACT = {};
+const logLabel = l => (I[LANG]['a_' + l.action] || I.en['a_' + l.action]) || l.action;
+const lastMonths = n => { const [y, m] = today().split('-').map(Number); return Array.from({ length: n }, (_, i) => { const d = new Date(Date.UTC(y, m - 1 - (n - 1 - i), 1)); return d.toISOString().slice(0, 7); }); };
+const verifiedPays = () => S.pays.filter(p => p.status === 'verified');
+const iconBtn = (act, icon, label, attrs = '', cls = '') => `<button class="btn btn-sm ${cls}" data-act="${act}" ${attrs} title="${esc(label)}" aria-label="${esc(label)}">${ic(icon, 15)}</button>`;
+
+/* ============ DASHBOARD ============ */
+VIEW.dashboard = () => {
+  const L = S.schools, eff = L.map(effStatus), cnt = s => eff.filter(x => x === s).length;
+  const active = eff.filter(x => ['active', 'trial', 'grace'].includes(x)).length;
+  const students = L.reduce((a, s) => a + Number(s.students), 0), teachers = L.reduce((a, s) => a + Number(s.teachers), 0);
+  const ver = verifiedPays(), mo = today().slice(0, 7), yr = today().slice(0, 4), pend = S.pays.filter(p => p.status === 'pending');
+  const soon = L.filter(s => ['active', 'trial'].includes(effStatus(s)) && daysLeft(s) !== null && daysLeft(s) <= 14);
+  const m12 = lastMonths(12), c = cur();
+  const rev = m12.map(m => sumCur(ver.filter(p => p.paid_on.slice(0, 7) === m), c)), reg = m12.map(m => L.filter(s => toDateInput(s.created_at).slice(0, 7) === m).length);
+  const planParts = {}; L.forEach(s => { planParts[s.plan] = (planParts[s.plan] || 0) + 1; });
+  const pal = ['#2563eb', '#7c3aed', '#14b8a6', '#f59e0b', '#ef4444', '#64748b'];
+  const kpi = (icon, cls, val, label, sub = '') => `<div class="card kpi"><div class="ico ${cls}">${ic(icon, 22)}</div><div style="min-width:0"><b>${val}</b><span>${esc(label)}</span>${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  const al = []; if (pend.length) al.push(`<div class="it"><div class="dot c-pending">${ic('clock')}</div><div class="tx"><b>${esc(t('al_pending', { n: pend.length }))}</b><span class="muted">${money(pend.reduce((a, p) => a + Number(p.amount), 0))}</span></div><button class="btn btn-sm" data-act="go" data-p="payments" data-set="payments.status=pending">${t('open')}</button></div>`);
+  alertSchools().slice(0, 6).forEach(s => { const e = effStatus(s); al.push(`<div class="it"><div class="dot c-${e === 'expired' ? 'danger' : 'warning'}">${ic('alert')}</div><div class="tx"><b>${esc(s.name)}</b><span class="muted">${esc(subLine(s))}</span></div>${stChip(e)}<button class="btn btn-sm btn-primary" data-act="pay-new" data-id="${esc(s.id)}">${t('renew')}</button></div>`); });
+  L.filter(s => !s.admin_emails).slice(0, 3).forEach(s => al.push(`<div class="it"><div class="dot c-warning">${ic('users')}</div><div class="tx"><b>${esc(s.name)}</b><span class="muted">${t('al_noadmin')}</span></div><button class="btn btn-sm" data-act="school-admin" data-id="${esc(s.id)}">${t('addadmin')}</button></div>`));
+  const rp = S.pays.slice(0, 5), rl = S.logs.slice(0, 6);
+  return `${pageHead(t('nav_dashboard'), t('dash_sub'), `<button class="btn" data-act="reload">${ic('refresh', 16)} ${t('refresh')}</button><button class="btn btn-primary" data-act="school-new">${ic('plus', 16)} ${t('newschool')}</button>`)}
+  <div class="grid g4" style="margin-bottom:14px">
+    ${kpi('school', 'i-blue', num(L.length), t('k_total'))}${kpi('check', 'i-green', num(active), t('k_active'), t('k_trial_n', { n: cnt('trial') }))}
+    ${kpi('ban', 'i-red', num(cnt('suspended')), t('k_susp'))}${kpi('clock', 'i-amber', num(cnt('expired')), t('k_expired'), cnt('grace') ? t('k_grace_n', { n: cnt('grace') }) : '')}
+    ${kpi('users', 'i-violet', num(students), t('k_students'))}${kpi('user', 'i-teal', num(teachers), t('k_teachers'))}
+    ${kpi('cash', 'i-green', `<span style="font-size:18px">${sumBy(ver.filter(p => p.paid_on.slice(0, 7) === mo))}</span>`, t('k_month'))}
+    ${kpi('trend', 'i-navy', `<span style="font-size:18px">${sumBy(ver.filter(p => p.paid_on.slice(0, 4) === yr))}</span>`, t('k_year'))}
+    ${kpi('clock', 'i-amber', num(pend.length), t('k_pending'), pend.length ? sumBy(pend) : '')}${kpi('alert', 'i-red', num(soon.length), t('k_expiring'))}
+  </div>
+  <div class="grid g21" style="margin-bottom:14px"><div class="card"><h3>${t('ch_revenue')} <span class="tiny">(${esc(c)})</span></h3>${ver.length ? barChart(rev, m12, { label: t('ch_revenue'), fmt: v => money(v, c) }) : `<div class="empty">${t('no_data')}</div>`}</div>
+    <div class="card"><h3>${t('ch_status')}</h3><div style="margin-top:12px">${donut([{ l: t('st_active'), v: cnt('active'), c: '#16a34a' }, { l: t('st_trial'), v: cnt('trial'), c: '#2563eb' }, { l: t('st_grace'), v: cnt('grace'), c: '#f59e0b' }, { l: t('st_expired'), v: cnt('expired'), c: '#d97706' }, { l: t('st_suspended'), v: cnt('suspended'), c: '#dc2626' }], { center: t('k_total'), label: t('ch_status') })}</div></div></div>
+  <div class="grid g21" style="margin-bottom:14px"><div class="card"><h3>${t('ch_reg')}</h3>${L.length ? lineChart(reg, m12, { label: t('ch_reg') }) : `<div class="empty">${t('no_data')}</div>`}</div>
+    <div class="card"><h3>${t('ch_plans')}</h3><div style="margin-top:12px">${donut(Object.keys(planParts).map((k, i) => ({ l: planName(k), v: planParts[k], c: pal[i % pal.length] })), { center: t('k_total'), label: t('ch_plans') })}</div></div></div>
+  <div class="grid g2"><div class="card"><h3>${t('alerts')}</h3><div class="list">${al.length ? al.join('') : `<div class="empty">${ic('check', 28)}<div>${t('alerts_none')}</div></div>`}</div></div>
+    <div class="card"><h3>${t('recent_pay')}</h3><div class="list">${rp.length ? rp.map(p => `<div class="it"><div class="dot c-${p.status === 'verified' ? 'success' : p.status === 'pending' ? 'warning' : 'low'}">${ic('cash')}</div><div class="tx"><b>${money(p.amount, p.currency)}</b><span class="muted">${esc(p.school_name)} · ${fdate(p.paid_on)}</span></div>${payChip(p.status)}</div>`).join('') : `<div class="empty">${t('no_pay')}</div>`}</div></div></div>
+  <div class="card" style="margin-top:14px"><h3>${t('recent')}</h3><div class="list">${rl.length ? rl.map(l => `<div class="it"><div class="dot c-info">${ic('activity')}</div><div class="tx"><b>${esc(logLabel(l))}${l.school_name ? ' · ' + esc(l.school_name) : ''}</b><span class="muted">${esc(l.details || '')}</span></div><span class="tiny">${ftime(l.created_at)}</span></div>`).join('') : `<div class="empty">${t('no_log')}</div>`}</div></div>`;
+};
+
+/* ============ SCHOOLS ============ */
+const schoolRows = () => {
+  const f = F('schools'), q = (f.q || '').trim().toLowerCase();
+  return S.schools.filter(s => (!q || (s.name + ' ' + (s.short_name || '') + ' ' + (s.admin_emails || '') + ' ' + (s.email || '')).toLowerCase().includes(q)) && (!f.status || effStatus(s) === f.status) && (!f.plan || s.plan === f.plan));
+};
+VIEW.schools = () => {
+  const f = F('schools'), rows = schoolRows();
+  const cols = [
+    { k: 'name', l: t('school'), v: s => s.name.toLowerCase(), h: s => `<div style="display:flex;gap:10px;align-items:center"><div class="av" style="width:36px;height:36px;border-radius:11px;cursor:default;font-size:13px">${esc(initials(s.short_name || s.name))}</div><div style="min-width:0"><b>${esc(s.name)}</b><div class="tiny">${esc(s.email || s.admin_emails || '')}</div></div></div>` },
+    { k: 'plan', l: t('plan'), v: s => s.plan, h: s => esc(planName(s.plan)) },
+    { k: 'st', l: t('status'), v: s => effStatus(s), h: s => stChip(effStatus(s)) },
+    { k: 'stu', l: t('students'), v: s => Number(s.students), r: 1, h: s => num(s.students) },
+    { k: 'tch', l: t('teachers'), v: s => Number(s.teachers), r: 1, h: s => num(s.teachers) },
+    { k: 'end', l: t('ends'), v: s => s.subscription_ends_at || '9', h: s => `<span class="muted">${esc(subLine(s))}</span>` },
+    { k: 'a', l: '', acts: 1, h: s => `<div class="acts">${iconBtn('school-view', 'eye', t('view'), `data-id="${esc(s.id)}"`)}${iconBtn('pay-new', 'cash', t('pay'), `data-id="${esc(s.id)}"`)}${iconBtn('school-edit', 'edit', t('edit'), `data-id="${esc(s.id)}"`)}${s.status === 'suspended' || effStatus(s) === 'expired' ? iconBtn('school-activate', 'check', t('activate'), `data-id="${esc(s.id)}"`, 'btn-ok') : iconBtn('school-suspend', 'ban', t('suspend'), `data-id="${esc(s.id)}"`, 'btn-danger')}</div>` }];
+  return `${pageHead(t('nav_schools'), t('schools_sub'), `<button class="btn" data-act="export-schools">${ic('download', 16)} CSV</button><button class="btn btn-primary" data-act="school-new">${ic('plus', 16)} ${t('newschool')}</button>`)}
+  <div class="bar"><input type="search" data-b="schools.q" value="${esc(f.q)}" placeholder="${esc(t('search_schools'))}"><select data-b="schools.status"><option value="">${t('all_status')}</option>${opts(['active', 'trial', 'grace', 'expired', 'suspended'].map(x => [x, t('st_' + x)]), f.status)}</select>
+    <select data-b="schools.plan"><option value="">${t('all_plans')}</option>${opts(S.plans.map(p => [p.code, p.name]), f.plan)}</select></div>
+  ${table('schools', cols, rows, { empty: empty('school', S.schools.length ? t('no_match') : t('none_schools'), S.schools.length ? '' : t('none_schools_sub')) })}`;
+};
+ACT['export-schools'] = () => downloadCSV('schools', [['Name', 'Short', 'Status', 'Plan', 'Billing', 'Ends', 'Grace days', 'Students', 'Teachers', 'Admins', 'Phone', 'Email', 'Registered', 'Last activity']].concat(schoolRows().map(s => [s.name, s.short_name, effStatus(s), s.plan, s.billing_cycle, toDateInput(s.subscription_ends_at), s.grace_days, s.students, s.teachers, s.admin_emails, s.phone, s.email, toDateInput(s.created_at), s.last_activity ? toDateInput(s.last_activity) : ''])));
+
+async function viewSchool(id) {
+  const s = byId(id); if (!s) return;
+  let tk = []; try { const r = await sb.from('platform_tickets').select('*').eq('school_id', id).order('updated_at', { ascending: false }); tk = r.data || []; } catch (e) { }
+  const pl = S.plans.find(p => p.code === s.plan), pays = S.pays.filter(p => p.school_id === id), hist = logsOf(id).slice(0, 12), e = effStatus(s);
+  const usage = (v, max) => max ? `<div class="pb" style="margin-top:4px"><i style="width:${Math.min(100, Math.round(v * 100 / max))}%"></i></div><span class="tiny">${num(v)} / ${num(max)}</span>` : '';
+  const m = modal(esc(s.name), `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${stChip(e)} ${chip('info', planName(s.plan))}<span style="flex:1"></span>
+      <button class="btn btn-sm btn-primary" data-act="pay-new" data-id="${esc(id)}">${ic('cash', 14)} ${t('pay')}</button><button class="btn btn-sm" data-act="school-edit" data-id="${esc(id)}">${ic('edit', 14)} ${t('edit')}</button><button class="btn btn-sm" data-act="school-sub" data-id="${esc(id)}">${ic('repeat', 14)} ${t('editsub')}</button><button class="btn btn-sm" data-act="school-admin" data-id="${esc(id)}">${ic('users', 14)} ${t('addadmin')}</button><button class="btn btn-sm" data-act="school-login" data-id="${esc(id)}">${ic('lock', 14)} ${t('sl_login')}</button><button class="btn btn-sm" data-act="ticket-new" data-id="${esc(id)}">${ic('life', 14)} ${t('new_ticket')}</button></div>
+    <div class="grid g2" style="margin-bottom:14px"><div class="card"><h3 style="margin-bottom:8px">${t('info')}</h3><dl class="kv"><dt>${t('type')}</dt><dd>${esc(t('t_' + ({ primary: 'p', secondary: 's', primary_secondary: 'ps' }[s.school_type] || 'ps')))}</dd><dt>${t('phone')}</dt><dd>${esc(s.phone || '—')}</dd><dt>${t('email')}</dt><dd>${esc(s.email || '—')}</dd><dt>${t('address')}</dt><dd>${esc(s.address || '—')}</dd><dt>${t('n_lang')}</dt><dd>${s.default_language === 'so' ? 'Soomaali' : 'English'}</dd><dt>${t('registered')}</dt><dd>${fdate(s.created_at)}</dd><dt>${t('last_act')}</dt><dd>${s.last_activity ? ftime(s.last_activity) : '—'}</dd><dt>${t('admins')}</dt><dd>${esc(s.admin_emails || '—')}</dd></dl></div>
+      <div class="card"><h3 style="margin-bottom:8px">${t('subscription')}</h3><dl class="kv"><dt>${t('status')}</dt><dd>${stChip(e)}</dd><dt>${t('plan')}</dt><dd>${esc(planName(s.plan))}</dd><dt>${t('cycle')}</dt><dd>${s.billing_cycle ? t(s.billing_cycle) : '—'}</dd><dt>${t('ends')}</dt><dd>${esc(subLine(s))}</dd><dt>${t('grace')}</dt><dd>${t('grace_days', { n: s.grace_days || 0 })}</dd>
+        <dt>${t('students')}</dt><dd>${num(s.students)}${usage(Number(s.students), pl && pl.max_students)}</dd><dt>${t('teachers')}</dt><dd>${num(s.teachers)}${usage(Number(s.teachers), pl && pl.max_teachers)}</dd></dl></div></div>
+    <div class="card" style="margin-bottom:14px"><h3 style="margin-bottom:6px">${t('pay_history')}</h3>${pays.length ? `<div class="tw"><table><tbody>${pays.slice(0, 8).map(p => `<tr><td>${fdate(p.paid_on)}</td><td><b>${money(p.amount, p.currency)}</b></td><td>${esc(t('m_' + p.method))}</td><td>${payChip(p.status)}</td><td class="muted">${esc(p.invoice_no || '')}</td></tr>`).join('')}</tbody></table></div>` : `<div class="muted">${t('no_pay')}</div>`}</div>
+    <div class="grid g2"><div class="card"><h3 style="margin-bottom:6px">${t('support_hist')}</h3>${tk.length ? tk.slice(0, 6).map(x => `<div class="it"><div class="tx"><b>${esc(x.subject)}</b><span class="tiny">${fdate(x.created_at)}</span></div>${chip(x.status, t('ts_' + x.status))}</div>`).join('') : `<div class="muted">${t('no_tickets')}</div>`}</div>
+      <div class="card"><h3 style="margin-bottom:6px">${t('status_hist')}</h3>${hist.length ? hist.map(l => `<div class="it"><div class="tx"><b>${esc(logLabel(l))}</b><span class="tiny">${esc(l.details || '')}</span></div><span class="tiny">${fdate(l.created_at)}</span></div>`).join('') : `<div class="muted">${t('no_log')}</div>`}</div></div>`, { lg: 1 });
+  return m;
+}
+ACT['school-view'] = el => viewSchool(el.dataset.id);
+const schoolFields = (s = {}) => `
+  <div class="fg"><label>${t('n_name')}</label><input name="name" value="${esc(s.name || '')}" required minlength="2" maxlength="200"></div>
+  <div class="row2"><div class="fg"><label>${t('n_short')}</label><input name="short" value="${esc(s.short_name || '')}"></div>
+    <div class="fg"><label>${t('type')}</label><select name="type">${opts([['primary_secondary', t('t_ps')], ['primary', t('t_p')], ['secondary', t('t_s')]], s.school_type || 'primary_secondary')}</select></div></div>`;
+ACT['school-new'] = () => {
+  const dt = Number(S.settings.default_trial_days || 14);
+  const m = modal(t('newschool'), `<form id="f">${schoolFields()}
+    <div class="row2"><div class="fg"><label>${t('n_lang')}</label><select name="lang"><option value="so">Soomaali</option><option value="en">English</option></select></div><div class="fg"><label>${t('currency')}</label><input name="cur" value="${esc(cur())}"></div></div>
+    <div class="fg"><label>${t('n_email')}</label><input name="email" type="email" required><div class="hint">${t('n_email_h')}</div></div>
+    <div class="row2"><div class="fg"><label>${t('status')}</label><select name="status"><option value="trial">${t('st_trial')}</option><option value="active">${t('st_active')}</option></select></div><div class="fg"><label>${t('ends')}</label><input name="ends" type="date" value="${toDateInput(new Date(Date.now() + dt * DAY).toISOString())}"></div></div>${foot(t('create'))}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = new FormData(e.target); await run($('[data-ok]', m), async () => { await rpc('platform_create_school', { p_name: f.get('name'), p_short: f.get('short'), p_type: f.get('type'), p_language: f.get('lang'), p_currency: (f.get('cur') || 'ETB').trim(), p_admin_email: f.get('email'), p_status: f.get('status'), p_ends_at: endOfDay(f.get('ends')) }); closeModal(); await reload(); }, t('created')); };
+};
+ACT['school-edit'] = el => {
+  const s = byId(el.dataset.id);
+  const m = modal(t('edit_school'), `<form id="f">${schoolFields(s)}<div class="row2"><div class="fg"><label>${t('phone')}</label><input name="phone" value="${esc(s.phone || '')}"></div><div class="fg"><label>${t('email')}</label><input name="email" type="email" value="${esc(s.email || '')}"></div></div>
+    <div class="fg"><label>${t('address')}</label><input name="address" value="${esc(s.address || '')}"></div>
+    <div class="row2"><div class="fg"><label>${t('n_lang')}</label><select name="lang">${opts([['so', 'Soomaali'], ['en', 'English']], s.default_language)}</select></div><div class="fg"><label>${t('currency')}</label><input name="cur" value="${esc(s.currency || 'ETB')}"></div></div>${foot()}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = new FormData(e.target); await run($('[data-ok]', m), async () => { await rpc('platform_update_school', { p_school: s.id, p_name: f.get('name'), p_short: f.get('short'), p_phone: f.get('phone'), p_email: f.get('email'), p_address: f.get('address'), p_type: f.get('type'), p_language: f.get('lang'), p_currency: f.get('cur') }); closeModal(); await reload(); }, t('saved')); };
+};
+ACT['school-admin'] = el => {
+  const s = byId(el.dataset.id);
+  const m = modal(esc(s.name), `<form id="f"><div class="fg"><label>${t('n_email')}</label><input name="email" type="email" required><div class="hint">${t('n_email_h')}</div></div>${foot()}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = new FormData(e.target); await run($('[data-ok]', m), async () => { await rpc('platform_add_admin', { p_school: s.id, p_email: f.get('email') }); closeModal(); await reload(); }, t('added')); };
+};
+async function setSub(s, status, ends, plan, cycle) { await rpc('platform_set_subscription', { p_school: s.id, p_status: status, p_plan: plan ?? s.plan, p_billing_cycle: cycle === undefined ? (s.billing_cycle || '') : cycle, p_ends_at: ends }); }
+ACT['school-suspend'] = async el => { const s = byId(el.dataset.id); if (!await confirmBox(t('confirm_susp', { n: s.name }), { danger: 1, ok: t('suspend') })) return; await run(null, async () => { await setSub(s, 'suspended', s.subscription_ends_at); await reload(); }, t('ok')); };
+ACT['school-activate'] = async el => { const s = byId(el.dataset.id); await run(el, async () => { const ends = s.subscription_ends_at && new Date(s.subscription_ends_at) > new Date() ? s.subscription_ends_at : addMonths(null, 1); await setSub(s, 'active', ends); await reload(); }, t('ok')); };
+
+/* ============ SUBSCRIPTIONS ============ */
+VIEW.subscriptions = () => {
+  const f = F('subs'), q = (f.q || '').toLowerCase();
+  const rows = S.schools.filter(s => (!q || s.name.toLowerCase().includes(q)) && (!f.status || effStatus(s) === f.status) && (f.soon !== '1' || (daysLeft(s) !== null && daysLeft(s) <= 30 && effStatus(s) !== 'suspended')));
+  const cols = [
+    { k: 'n', l: t('school'), v: s => s.name.toLowerCase(), h: s => `<b>${esc(s.name)}</b>` },
+    { k: 'p', l: t('plan'), v: s => s.plan, h: s => `${esc(planName(s.plan))}<div class="tiny">${s.billing_cycle ? t(s.billing_cycle) : ''}</div>` },
+    { k: 's', l: t('status'), v: s => effStatus(s), h: s => stChip(effStatus(s)) },
+    { k: 'e', l: t('ends'), v: s => s.subscription_ends_at || '9', h: s => `<span class="muted">${esc(subLine(s))}</span>` },
+    { k: 'g', l: t('grace'), v: s => s.grace_days, h: s => t('grace_days', { n: s.grace_days || 0 }) },
+    { k: 'a', l: '', acts: 1, h: s => `<div class="acts"><button class="btn btn-sm btn-primary" data-act="pay-new" data-id="${esc(s.id)}">${t('renew')}</button><button class="btn btn-sm" data-act="school-ext" data-m="1" data-id="${esc(s.id)}">${t('m1')}</button><button class="btn btn-sm" data-act="school-ext" data-m="12" data-id="${esc(s.id)}">${t('y1')}</button>${iconBtn('school-sub', 'edit', t('editsub'), `data-id="${esc(s.id)}"`)}${iconBtn('school-hist', 'clock', t('sub_history'), `data-id="${esc(s.id)}"`)}</div>` }];
+  return `${pageHead(t('nav_subs'), t('subs_sub'), `<button class="btn" data-act="export-subs">${ic('download', 16)} CSV</button>`)}
+  <div class="note">${ic('alert', 18)}<div>${t('subs_note')}</div></div>
+  <div class="bar"><input type="search" data-b="subs.q" value="${esc(f.q)}" placeholder="${esc(t('search_schools'))}"><select data-b="subs.status"><option value="">${t('all_status')}</option>${opts(['active', 'trial', 'grace', 'expired', 'suspended'].map(x => [x, t('st_' + x)]), f.status)}</select>
+    <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-b="subs.soon" value="1" ${f.soon === '1' ? 'checked' : ''}> ${t('only_expiring')}</label></div>
+  ${table('subs', cols, rows, { empty: empty('repeat', t('no_match')) })}`;
+};
+ACT['export-subs'] = () => downloadCSV('subscriptions', [['School', 'Plan', 'Billing', 'Status', 'Ends', 'Days left', 'Grace days']].concat(S.schools.map(s => [s.name, s.plan, s.billing_cycle, effStatus(s), toDateInput(s.subscription_ends_at), daysLeft(s), s.grace_days])));
+ACT['school-ext'] = async el => { const s = byId(el.dataset.id), n = +el.dataset.m; if (!await confirmBox(t('confirm_ext', { n: s.name, m: n }), { extra: `<p class="hint">${t('ext_audit')}</p>` })) return; await run(null, async () => { await setSub(s, s.status === 'trial' ? 'trial' : 'active', addMonths(s.subscription_ends_at, n)); await reload(); }, t('ok')); };
+ACT['school-sub'] = el => {
+  const s = byId(el.dataset.id);
+  const m = modal(esc(s.name), `<form id="f"><div class="row2"><div class="fg"><label>${t('status')}</label><select name="status">${opts(['active', 'trial', 'suspended', 'expired'].map(x => [x, t('st_' + x)]), s.status)}</select></div>
+    <div class="fg"><label>${t('plan')}</label><select name="plan">${opts(S.plans.filter(p => p.is_active || p.code === s.plan).map(p => [p.code, p.name]).concat(S.plans.some(p => p.code === s.plan) ? [] : [[s.plan, s.plan]]), s.plan)}</select></div></div>
+    <div class="row2"><div class="fg"><label>${t('cycle')}</label><select name="cycle"><option value="">—</option>${opts([['monthly', t('monthly')], ['annual', t('annual')]], s.billing_cycle)}</select></div><div class="fg"><label>${t('ends')}</label><input name="ends" type="date" value="${toDateInput(s.subscription_ends_at)}"><div class="hint">${t('custom_period')}</div></div></div>
+    <div class="fg"><label>${t('grace')}</label><input name="grace" type="number" min="0" max="90" value="${s.grace_days || 0}"><div class="hint">${t('grace_h')}</div></div>${foot()}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = new FormData(e.target); await run($('[data-ok]', m), async () => { await setSub(s, f.get('status'), endOfDay(f.get('ends')), f.get('plan'), f.get('cycle')); if (Number(f.get('grace')) !== (s.grace_days || 0)) await rpc('platform_school_grace', { p_school: s.id, p_days: Number(f.get('grace')) }); closeModal(); await reload(); }, t('saved')); };
+};
+ACT['school-hist'] = el => {
+  const s = byId(el.dataset.id), keys = ['subscription', 'payment_verified', 'payment_refunded', 'auto_expired', 'grace_changed', 'school_updated', 'school_created'], h = logsOf(s.id).filter(l => keys.includes(l.action));
+  modal(esc(s.name) + ' · ' + t('sub_history'), h.length ? `<div class="list">${h.map(l => `<div class="it"><div class="dot c-info">${ic('repeat')}</div><div class="tx"><b>${esc(logLabel(l))}</b><span class="muted">${esc(l.details || '')} ${l.actor_email ? '· ' + esc(l.actor_email.split('@')[0]) : '· ' + t('system')}</span></div><span class="tiny">${ftime(l.created_at)}</span></div>`).join('')}</div>` : `<div class="empty">${t('no_log')}</div>`);
+};
+
+/* ============ PLANS ============ */
+VIEW.plans = () => `${pageHead(t('nav_plans'), t('plans_sub'), `<button class="btn btn-primary" data-act="plan-new">${ic('plus', 16)} ${t('new_plan')}</button>`)}
+  ${S.plans.length ? `<div class="grid g3">${S.plans.map(p => { const used = S.schools.filter(s => s.plan === p.code).length; return `<div class="card" style="${p.is_active ? '' : 'opacity:.65'}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h3>${esc(p.name)}</h3><div class="tiny">${esc(p.code)}</div></div>${chip(p.is_active ? 'active' : 'low', p.is_active ? t('active') : t('inactive'))}</div>
+      <p class="muted" style="margin:8px 0">${esc(p.description || '')}</p>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.02em">${money(p.price_monthly, p.currency)} <span class="tiny">/ ${t('monthly_s')}</span></div><div class="muted">${money(p.price_annual, p.currency)} / ${t('annual_s')}</div>
+      <div class="tiny" style="margin-top:8px">${t('limit_students')}: ${p.max_students ? num(p.max_students) : t('unlimited')} · ${t('limit_teachers')}: ${p.max_teachers ? num(p.max_teachers) : t('unlimited')}</div>
+      ${(p.features || []).length ? `<ul class="muted" style="padding-left:18px;margin:8px 0">${p.features.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      <div class="acts" style="justify-content:space-between;margin-top:10px"><span class="tiny">${t('schools_using', { n: used })}</span><span class="acts">${iconBtn('plan-edit', 'edit', t('edit'), `data-id="${esc(p.id)}"`)}${iconBtn('plan-del', 'trash', t('del'), `data-id="${esc(p.id)}"`, 'btn-danger')}</span></div></div>`; }).join('')}</div>` : empty('tag', t('no_plans'))}`;
+const planForm = (p = {}) => {
+  const m = modal(p.id ? t('edit') + ' · ' + esc(p.name) : t('new_plan'), `<form id="f"><div class="row2"><div class="fg"><label>${t('plan_code')}</label><input name="code" value="${esc(p.code || '')}" ${p.id ? 'readonly' : ''} required pattern="[a-z0-9_\\-]{2,30}" maxlength="30"><div class="hint">${t('plan_code_h')}</div></div><div class="fg"><label>${t('name')}</label><input name="name" value="${esc(p.name || '')}" required minlength="2" maxlength="80"></div></div>
+    <div class="fg"><label>${t('description')}</label><input name="desc" value="${esc(p.description || '')}"></div>
+    <div class="row2"><div class="fg"><label>${t('price_m')}</label><input name="pm" type="number" min="0" step="0.01" value="${p.price_monthly ?? 0}" required></div><div class="fg"><label>${t('price_a')}</label><input name="pa" type="number" min="0" step="0.01" value="${p.price_annual ?? 0}" required></div></div>
+    <div class="row2"><div class="fg"><label>${t('limit_students')}</label><input name="ms" type="number" min="1" value="${p.max_students ?? ''}" placeholder="${esc(t('unlimited'))}"></div><div class="fg"><label>${t('limit_teachers')}</label><input name="mt" type="number" min="1" value="${p.max_teachers ?? ''}" placeholder="${esc(t('unlimited'))}"></div></div>
+    <div class="row2"><div class="fg"><label>${t('currency')}</label><input name="cur" value="${esc(p.currency || cur())}"></div><div class="fg"><label>${t('sort')}</label><input name="sort" type="number" value="${p.sort_order ?? 0}"></div></div>
+    <div class="fg"><label>${t('features')}</label><textarea name="features">${esc((p.features || []).join('\n'))}</textarea><div class="hint">${t('features_h')}</div></div>
+    <label class="muted" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="active" ${p.is_active === false ? '' : 'checked'}> ${t('active')}</label>${foot()}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = new FormData(e.target); await run($('[data-ok]', m), async () => { await rpc('platform_plan_save', { p_id: p.id || null, p_code: f.get('code'), p_name: f.get('name'), p_description: f.get('desc'), p_price_monthly: Number(f.get('pm')), p_price_annual: Number(f.get('pa')), p_currency: f.get('cur'), p_max_students: f.get('ms') ? Number(f.get('ms')) : null, p_max_teachers: f.get('mt') ? Number(f.get('mt')) : null, p_features: String(f.get('features') || '').split('\n').map(x => x.trim()).filter(Boolean), p_active: f.get('active') === 'on', p_sort: Number(f.get('sort') || 0) }); closeModal(); await reload(); }, t('saved')); };
+};
+ACT['plan-new'] = () => planForm();
+ACT['plan-edit'] = el => planForm(S.plans.find(p => p.id === el.dataset.id));
+ACT['plan-del'] = async el => { const p = S.plans.find(x => x.id === el.dataset.id); if (!await confirmBox(t('confirm_delplan', { n: p.name }), { danger: 1, ok: t('del') })) return; await run(null, async () => { await rpc('platform_plan_delete', { p_id: p.id }); await reload(); }, t('ok')); };
+
+/* ============ SCHOOL LOGIN (username & password) - uses the 'school-account' Edge Function (service key stays on the server) ============ */
+const genPwd = () => { const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = new Uint32Array(12); crypto.getRandomValues(r); return Array.from(r, x => a[x % a.length]).join(''); };
+async function schoolAccount(body) {
+  const r = await sb.functions.invoke('rapid-task', { body });
+  if (!r.error) return r.data;
+  let j = null; try { j = await r.error.context.json(); } catch (e) { }
+  const map = { nothing: 'sl_nothing', weak_password: 'sl_weak', bad_email: 'sl_bad_email', email_taken: 'sl_taken', forbidden: 'sl_forbidden', need_both: 'sl_need_both', choose: 'sl_choose' };
+  if (j && map[j.code]) throw new Error(t(map[j.code]));
+  if (/not.?found|Failed to send|FunctionsFetch|FunctionsRelay/i.test((j && (j.message || j.error)) || r.error.message || '')) throw new Error(t('sl_nosvc'));
+  throw new Error((j && (j.error || j.message)) || r.error.message || t('sl_failed'));
+}
+ACT['school-login'] = async el => {
+  const s = byId(el.dataset.id); if (!s) return;
+  let adm = []; try { const r = await sb.from('school_members').select('user_id, profiles(email,full_name)').eq('school_id', s.id).eq('role', 'school_admin'); adm = (r.data || []).filter(x => x.profiles); } catch (e) { }
+  const cur = adm.length ? `<div class="fg"><label>${t('sl_current')}</label>${adm.length > 1 ? `<select name="uid">${adm.map(a => `<option value="${esc(a.user_id)}">${esc(a.profiles.email)}</option>`).join('')}</select>` : `<input value="${esc(adm[0].profiles.email)}" disabled>`}</div>` : `<div class="note">${ic('alert', 18)}<div>${t('sl_none')}</div></div>`;
+  const m = modal(esc(s.name) + ' · ' + t('sl_title'), `<form id="f" autocomplete="off"><p class="hint" style="margin:0 0 10px">${t('sl_help')}</p>${cur}
+    <div class="fg"><label>${t('sl_email')}</label><input name="email" type="email" autocomplete="off" placeholder="${esc(adm.length === 1 ? adm[0].profiles.email : 'admin@school.com')}"></div>
+    <div class="fg"><label>${t('sl_pwd')}</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input name="pwd" type="password" autocomplete="new-password" minlength="8" maxlength="72" style="flex:1;min-width:140px">
+      <button type="button" class="btn btn-sm" data-g="1">${t('sl_gen')}</button><button type="button" class="btn btn-sm" data-s="1">${t('sl_show')}</button><button type="button" class="btn btn-sm" data-c="1">${t('sl_copy')}</button></div></div>${foot(t('sl_save'))}</form>`);
+  const f = $('#f', m), pw = f.elements.pwd;
+  m.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.g) { pw.value = genPwd(); pw.type = 'text'; $('[data-s]', m).textContent = t('sl_hide'); }
+    if (b.dataset.s) { pw.type = pw.type === 'password' ? 'text' : 'password'; b.textContent = pw.type === 'password' ? t('sl_show') : t('sl_hide'); }
+    if (b.dataset.c && pw.value) { (navigator.clipboard ? navigator.clipboard.writeText(pw.value) : Promise.reject()).then(() => toast(t('sl_copied')), () => { pw.type = 'text'; pw.select(); }); }
+  });
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const email = f.elements.email.value.trim(), password = pw.value;
+    await run($('[data-ok]', m), async () => {
+      if (!email && !password) throw new Error(t('sl_nothing'));
+      if (password && (password.length < 8 || password.length > 72)) throw new Error(t('sl_weak'));
+      const body = { school_id: s.id, email, password }; if (f.elements.uid) body.user_id = f.elements.uid.value;
+      await schoolAccount(body); closeModal(); await reload();
+    }, t('sl_done'));
+  };
+};
+/* ============ PAYMENTS ============ */
+const METHODS = ['cash', 'bank_transfer', 'telebirr', 'cbe_birr', 'mobile_money', 'other'];
+const payRows = () => {
+  const f = F('pays'), q = (f.q || '').trim().toLowerCase();
+  return S.pays.filter(p => (!q || [p.reference, p.invoice_no, p.receipt_no, p.school_name, p.note].join(' ').toLowerCase().includes(q)) && (!f.status || p.status === f.status) && (!f.method || p.method === f.method) && (!f.school || p.school_id === f.school) && (!f.from || p.paid_on >= f.from) && (!f.to || p.paid_on <= f.to));
+};
+VIEW.payments = () => {
+  const f = F('pays'), rows = payRows(), by = s => rows.filter(p => p.status === s);
+  const cols = [
+    { k: 'd', l: t('date'), v: p => p.paid_on, h: p => fdate(p.paid_on) },
+    { k: 's', l: t('school'), v: p => p.school_name.toLowerCase(), h: p => `<b>${esc(p.school_name)}</b><div class="tiny">${esc(planName(p.plan_code))}${p.months ? ' · ' + t('m_n', { n: p.months }) : ''}</div>` },
+    { k: 'a', l: t('amount'), v: p => Number(p.amount), r: 1, h: p => `<b>${money(p.amount, p.currency)}</b>` },
+    { k: 'm', l: t('method'), v: p => p.method, h: p => esc(t('m_' + p.method)) },
+    { k: 'r', l: t('reference'), v: p => p.reference || '', h: p => `<span class="muted">${esc(p.reference || '—')}</span>` },
+    { k: 'st', l: t('status'), v: p => p.status, h: p => payChip(p.status) },
+    { k: 'i', l: t('invoice_no'), v: p => p.invoice_no || '', h: p => `<span class="tiny">${esc(p.invoice_no || '')}</span>` },
+    { k: 'x', l: '', acts: 1, h: p => `<div class="acts">${p.status === 'pending' ? `${iconBtn('pay-verify', 'check', t('verify'), `data-id="${esc(p.id)}"`, 'btn-ok')}${iconBtn('pay-reject', 'x', t('reject'), `data-id="${esc(p.id)}"`, 'btn-danger')}` : ''}${p.status === 'verified' ? iconBtn('pay-refund', 'undo', t('refund'), `data-id="${esc(p.id)}"`) : ''}${iconBtn('pay-view', 'eye', t('view'), `data-id="${esc(p.id)}"`)}${p.status === 'pending' || p.status === 'rejected' ? iconBtn('pay-del', 'trash', t('del'), `data-id="${esc(p.id)}"`, 'btn-danger') : ''}</div>` }];
+  const meth = METHODS.map(m => { const r = rows.filter(p => p.method === m); return r.length ? `<tr><td>${esc(t('m_' + m))}</td><td class="r">${r.filter(p => p.status === 'verified').length}</td><td class="r">${sumBy(r.filter(p => p.status === 'verified'))}</td><td class="r">${r.filter(p => p.status === 'pending').length}</td><td class="r">${sumBy(r.filter(p => p.status === 'pending'))}</td></tr>` : ''; }).join('');
+  return `${pageHead(t('nav_pay'), t('pay_sub'), `<button class="btn" data-act="export-pays">${ic('download', 16)} CSV</button><button class="btn btn-primary" data-act="pay-new">${ic('plus', 16)} ${t('recpay')}</button>`)}
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="card kpi"><div class="ico i-green">${ic('check', 22)}</div><div><b style="font-size:17px">${sumBy(by('verified'))}</b><span>${t('ps_verified')} (${by('verified').length})</span></div></div>
+    <div class="card kpi"><div class="ico i-amber">${ic('clock', 22)}</div><div><b style="font-size:17px">${sumBy(by('pending'))}</b><span>${t('ps_pending')} (${by('pending').length})</span></div></div>
+    <div class="card kpi"><div class="ico i-red">${ic('x', 22)}</div><div><b style="font-size:17px">${by('rejected').length}</b><span>${t('ps_rejected')}</span></div></div>
+    <div class="card kpi"><div class="ico i-navy">${ic('undo', 22)}</div><div><b style="font-size:17px">${sumBy(by('refunded'))}</b><span>${t('ps_refunded')} (${by('refunded').length})</span></div></div></div>
+  <div class="bar"><input type="search" data-b="pays.q" value="${esc(f.q)}" placeholder="${esc(t('search_pay'))}"><select data-b="pays.status"><option value="">${t('all_status')}</option>${opts(['pending', 'verified', 'rejected', 'refunded'].map(x => [x, t('ps_' + x)]), f.status)}</select>
+    <select data-b="pays.method"><option value="">${t('all_methods')}</option>${opts(METHODS.map(x => [x, t('m_' + x)]), f.method)}</select><select data-b="pays.school"><option value="">${t('all_schools')}</option>${opts(S.schools.map(s => [s.id, s.name]), f.school)}</select>
+    <input type="date" data-b="pays.from" value="${esc(f.from || '')}" title="${esc(t('from'))}"><input type="date" data-b="pays.to" value="${esc(f.to || '')}" title="${esc(t('to'))}"></div>
+  ${table('pays', cols, rows, { empty: empty('cash', S.pays.length ? t('no_match') : t('no_pay')) })}
+  ${rows.length ? `<div class="card" style="margin-top:14px"><h3>${t('reconcile')}</h3><p class="muted" style="margin:2px 0 8px">${t('reconcile_h')}</p><div class="tw"><table><thead><tr><th>${t('method')}</th><th class="r">${t('ps_verified')}</th><th class="r">${t('total')}</th><th class="r">${t('ps_pending')}</th><th class="r">${t('total')}</th></tr></thead><tbody>${meth}</tbody></table></div></div>` : ''}`;
+};
+ACT['export-pays'] = () => downloadCSV('payments', [['Date', 'School', 'Amount', 'Currency', 'Method', 'Reference', 'Status', 'Months', 'Plan', 'Invoice', 'Receipt', 'Verified at', 'Note']].concat(payRows().map(p => [p.paid_on, p.school_name, p.amount, p.currency, p.method, p.reference, p.status, p.months, p.plan_code, p.invoice_no, p.receipt_no, p.verified_at ? toDateInput(p.verified_at) : '', p.note])));
+ACT['pay-new'] = el => {
+  const cur0 = el && el.dataset ? el.dataset.id : '', sc = byId(cur0);
+  const m = modal(t('recpay'), `<form id="f"><div class="note warn">${ic('alert', 18)}<div>${t('pay_warn')}</div></div>
+    <div class="fg"><label>${t('school')}</label><select name="school" required>${opts(S.schools.map(x => [x.id, x.name]), cur0)}</select></div>
+    <div class="row2"><div class="fg"><label>${t('plan')}</label><select name="plan"><option value="">—</option>${opts(S.plans.filter(p => p.is_active).map(p => [p.code, p.name]), sc && sc.plan)}</select></div>
+      <div class="fg"><label>${t('months')}</label><select name="months">${opts([[1, t('m_n', { n: 1 })], [3, t('m_n', { n: 3 })], [6, t('m_n', { n: 6 })], [12, t('m_n', { n: 12 })], [0, t('m_0')]], 1)}</select></div></div>
+    <div class="row2"><div class="fg"><label>${t('amount')}</label><input name="amount" type="number" step="0.01" min="0.01" required></div><div class="fg"><label>${t('currency')}</label><input name="cur" value="${esc((sc && sc.currency) || cur())}" required></div></div>
+    <div class="row2"><div class="fg"><label>${t('method')}</label><select name="method">${opts(METHODS.map(x => [x, t('m_' + x)]), 'cash')}</select></div><div class="fg"><label>${t('paid_on')}</label><input name="date" type="date" value="${today()}" required></div></div>
+    <div class="fg"><label>${t('reference')} <span class="tiny" id="rq" hidden>*</span></label><input name="ref" maxlength="80"><div class="hint">${t('ref_h')}</div></div>
+    <div class="fg"><label>${t('note')}</label><input name="note" maxlength="300"></div>
+    <label class="muted" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="verify" style="margin-top:4px"> <span>${t('verify_now')}</span></label>${foot()}</form>`);
+  const f = $('#f', m); let dirty = false;
+  const suggest = () => { if (dirty) return; const p = S.plans.find(x => x.code === f.plan.value), mo = Number(f.months.value); if (!p || !mo) return; f.amount.value = mo === 12 && Number(p.price_annual) > 0 ? p.price_annual : Number(p.price_monthly) * mo || ''; if (p.currency) f.cur.value = p.currency; };
+  const refReq = () => { const need = f.method.value !== 'cash'; f.ref.required = need; $('#rq', m).hidden = !need; };
+  f.amount.addEventListener('input', () => { dirty = true; }); f.plan.addEventListener('change', suggest); f.months.addEventListener('change', suggest); f.method.addEventListener('change', refReq); refReq(); suggest();
+  f.onsubmit = async e => { e.preventDefault(); await run($('[data-ok]', m), async () => { await rpc('platform_payment_add', { p_school: f.school.value, p_amount: Number(f.amount.value), p_currency: f.cur.value, p_method: f.method.value, p_paid_on: f.date.value, p_months: Number(f.months.value), p_reference: f.ref.value, p_note: f.note.value, p_plan: f.plan.value, p_verify: f.verify.checked }); closeModal(); await reload(); }, f.verify.checked ? t('pay_verified') : t('pay_saved')); };
+};
+const payById = id => S.pays.find(p => p.id === id);
+ACT['pay-verify'] = async el => { const p = payById(el.dataset.id); if (!await confirmBox(t('confirm_verify', { a: money(p.amount, p.currency), s: p.school_name }), { ok: t('verify'), extra: `<p class="hint">${p.months ? t('verify_extends', { n: p.months }) : ''}</p>` })) return; await run(null, async () => { await rpc('platform_payment_verify', { p_id: p.id }); await reload(); }, t('pay_verified')); };
+ACT['pay-reject'] = el => {
+  const p = payById(el.dataset.id), m = modal(t('reject'), `<form id="f"><p>${esc(money(p.amount, p.currency))} · ${esc(p.school_name)}</p><div class="fg"><label>${t('reason')}</label><input name="r" required maxlength="200"></div>${foot(t('reject'))}</form>`);
+  $('[data-ok]', m).classList.add('btn-danger'); $('#f', m).onsubmit = async e => { e.preventDefault(); await run($('[data-ok]', m), async () => { await rpc('platform_payment_reject', { p_id: p.id, p_reason: e.target.r.value }); closeModal(); await reload(); }, t('ok')); };
+};
+ACT['pay-refund'] = el => {
+  const p = payById(el.dataset.id), m = modal(t('refund'), `<form id="f"><p>${esc(money(p.amount, p.currency))} · ${esc(p.school_name)}</p><div class="fg"><label>${t('note')}</label><input name="n" maxlength="200"></div>
+    ${p.months ? `<label class="muted" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="rb" checked style="margin-top:4px"> <span>${t('refund_rollback', { n: p.months })}</span></label>` : ''}${foot(t('refund'))}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); await run($('[data-ok]', m), async () => { await rpc('platform_payment_refund', { p_id: p.id, p_note: e.target.n.value, p_rollback: !!(e.target.rb && e.target.rb.checked) }); closeModal(); await reload(); }, t('ok')); };
+};
+ACT['pay-del'] = async el => { if (!await confirmBox(t('confirm_delpay'), { danger: 1, ok: t('del') })) return; await run(null, async () => { await rpc('platform_delete_payment', { p_id: el.dataset.id }); await reload(); }, t('ok')); };
+ACT['pay-view'] = el => {
+  const p = payById(el.dataset.id);
+  modal(esc(p.invoice_no || t('payment')), `<div style="margin-bottom:10px">${payChip(p.status)}</div><dl class="kv"><dt>${t('school')}</dt><dd>${esc(p.school_name)}</dd><dt>${t('amount')}</dt><dd><b>${money(p.amount, p.currency)}</b></dd><dt>${t('method')}</dt><dd>${esc(t('m_' + p.method))}</dd><dt>${t('reference')}</dt><dd>${esc(p.reference || '—')}</dd><dt>${t('paid_on')}</dt><dd>${fdate(p.paid_on)}</dd><dt>${t('plan')}</dt><dd>${esc(planName(p.plan_code))}${p.months ? ' · ' + t('m_n', { n: p.months }) : ''}</dd><dt>${t('invoice_no')}</dt><dd>${esc(p.invoice_no || '—')}</dd><dt>${t('receipt_no')}</dt><dd>${esc(p.receipt_no || '—')}</dd><dt>${t('recorded_by')}</dt><dd>${esc(p.created_by_email || '—')}</dd>${p.verified_at ? `<dt>${t('verified_by')}</dt><dd>${esc(p.verified_by_email || '—')} · ${ftime(p.verified_at)}</dd>` : ''}${p.reject_reason ? `<dt>${t('reason')}</dt><dd>${esc(p.reject_reason)}</dd>` : ''}${p.refund_note ? `<dt>${t('note')}</dt><dd>${esc(p.refund_note)}</dd>` : ''}${p.note ? `<dt>${t('note')}</dt><dd>${esc(p.note)}</dd>` : ''}</dl>
+    <div class="acts" style="margin-top:14px;justify-content:flex-start"><button class="btn" data-act="doc" data-k="invoice" data-id="${esc(p.id)}">${ic('file', 15)} ${t('invoice')}</button>${p.receipt_no ? `<button class="btn" data-act="doc" data-k="receipt" data-id="${esc(p.id)}">${ic('file', 15)} ${t('receipt')}</button>` : ''}</div>`);
+};
+
+/* ============ INVOICES & RECEIPTS ============ */
+function docHTML(p, kind) {
+  const s = byId(p.school_id) || {}, st = S.settings, isR = kind === 'receipt', paid = p.status === 'verified' || p.status === 'refunded';
+  const no = isR ? p.receipt_no : p.invoice_no, label = p.plan_code ? planName(p.plan_code) : t('subscription');
+  return `<div class="doc"><div class="hd"><div><h1>${esc(st.company_name || st.platform_name || 'Platform')}</h1><div>${esc(st.company_address || '')}</div><div>${esc([st.company_phone, st.company_email].filter(Boolean).join(' · '))}</div></div>
+    <div style="text-align:right"><h1 style="color:#1e3a8a">${isR ? t('receipt').toUpperCase() : t('invoice').toUpperCase()}</h1><div><b>${esc(no || '')}</b></div><div>${t('date')}: ${fdate(isR ? (p.verified_at || p.paid_on) : p.created_at)}</div>${isR || paid ? `<div class="stamp">${esc(t('stamp_paid'))}</div>` : `<div class="stamp un">${esc(t('stamp_unpaid'))}</div>`}</div></div>
+    <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><b>${t('bill_to')}</b><div>${esc(s.name || p.school_name)}</div><div>${esc(s.address || '')}</div><div>${esc([s.phone, s.email].filter(Boolean).join(' · '))}</div></div>
+      <div style="text-align:right">${isR ? `<div>${t('invoice_no')}: ${esc(p.invoice_no || '')}</div><div>${t('method')}: ${esc(t('m_' + p.method))}</div><div>${t('reference')}: ${esc(p.reference || '—')}</div><div>${t('paid_on')}: ${fdate(p.paid_on)}</div>` : `<div>${t('method')}: ${esc(t('m_' + p.method))}</div>`}</div></div>
+    <table><thead><tr><th>${t('description')}</th><th>${t('period')}</th><th style="text-align:right">${t('amount')}</th></tr></thead><tbody><tr><td>${esc(label)} ${t('subscription').toLowerCase()}</td><td>${p.months ? t('m_n', { n: p.months }) : '—'}</td><td style="text-align:right">${money(p.amount, p.currency)}</td></tr></tbody>
+      <tfoot><tr><td colspan="2" style="text-align:right"><b>${t('total')}</b></td><td style="text-align:right"><b>${money(p.amount, p.currency)}</b></td></tr></tfoot></table>
+    ${!isR && !paid && st.payment_instructions ? `<div><b>${t('pay_instr')}</b><div style="white-space:pre-wrap">${esc(st.payment_instructions)}</div></div>` : ''}
+    ${isR && p.verified_by_email ? `<div class="muted">${t('verified_by')}: ${esc(p.verified_by_email)}</div>` : ''}<p style="margin-top:22px;color:#555">${esc(st.invoice_footer || '')}</p></div>`;
+}
+ACT.doc = el => { const p = payById(el.dataset.id), k = el.dataset.k; const m = modal(t(k) + ' · ' + esc(k === 'receipt' ? p.receipt_no : p.invoice_no), docHTML(p, k) + `<div class="mf"><button class="btn" data-act="close">${t('close')}</button><button class="btn btn-primary" data-act="doc-print">${ic('print', 15)} ${t('print_pdf')}</button></div>`, { lg: 1 }); };
+ACT['doc-print'] = () => { const d = $('.back .doc'); if (d) printHTML(d.outerHTML); };
+VIEW.invoices = () => {
+  const f = F('inv'), q = (f.q || '').toLowerCase(), rows = S.pays.filter(p => p.status !== 'rejected' && (!q || [p.invoice_no, p.receipt_no, p.school_name, p.reference].join(' ').toLowerCase().includes(q)) && (!f.school || p.school_id === f.school) && (!f.kind || (f.kind === 'receipt' ? p.receipt_no : !p.receipt_no)));
+  const cols = [
+    { k: 'i', l: t('invoice_no'), v: p => p.invoice_no || '', h: p => `<b>${esc(p.invoice_no || '')}</b>` }, { k: 'r', l: t('receipt_no'), v: p => p.receipt_no || '', h: p => esc(p.receipt_no || '—') },
+    { k: 's', l: t('school'), v: p => p.school_name.toLowerCase(), h: p => esc(p.school_name) }, { k: 'd', l: t('date'), v: p => p.created_at, h: p => fdate(p.created_at) },
+    { k: 'a', l: t('amount'), v: p => Number(p.amount), r: 1, h: p => money(p.amount, p.currency) }, { k: 'st', l: t('status'), v: p => p.status, h: p => payChip(p.status) },
+    { k: 'x', l: '', acts: 1, h: p => `<div class="acts"><button class="btn btn-sm" data-act="doc" data-k="invoice" data-id="${esc(p.id)}">${ic('file', 14)} ${t('invoice')}</button>${p.receipt_no ? `<button class="btn btn-sm btn-primary" data-act="doc" data-k="receipt" data-id="${esc(p.id)}">${ic('file', 14)} ${t('receipt')}</button>` : ''}</div>` }];
+  return `${pageHead(t('nav_inv'), t('inv_sub'), `<button class="btn" data-act="export-inv">${ic('download', 16)} CSV</button>`)}
+  <div class="bar"><input type="search" data-b="inv.q" value="${esc(f.q)}" placeholder="${esc(t('search_pay'))}"><select data-b="inv.school"><option value="">${t('all_schools')}</option>${opts(S.schools.map(s => [s.id, s.name]), f.school)}</select><select data-b="inv.kind"><option value="">${t('all_docs')}</option><option value="receipt" ${f.kind === 'receipt' ? 'selected' : ''}>${t('receipt')}</option><option value="open" ${f.kind === 'open' ? 'selected' : ''}>${t('only_invoices')}</option></select></div>
+  ${table('inv', cols, rows, { empty: empty('file', t('no_docs')) })}`;
+};
+ACT['export-inv'] = () => downloadCSV('invoices', [['Invoice', 'Receipt', 'School', 'Date', 'Amount', 'Currency', 'Status']].concat(S.pays.filter(p => p.status !== 'rejected').map(p => [p.invoice_no, p.receipt_no, p.school_name, toDateInput(p.created_at), p.amount, p.currency, p.status])));
+
+/* ============ USERS & ROLES ============ */
+PRE.users = async () => { S.staff = await rpc('platform_staff_list'); };
+VIEW.users = () => {
+  const cols = [{ k: 'e', l: t('email'), v: u => u.email, h: u => `<b>${esc(u.email)}</b>${u.id === (S.me && S.me.id) ? ` <span class="chip c-info">${t('you')}</span>` : ''}` }, { k: 'n', l: t('name'), h: u => esc(u.full_name || '—') }, { k: 'r', l: t('role'), h: () => chip('active', t('role_super')) },
+    { k: 'l', l: t('last_login'), v: u => u.last_login || '', h: u => u.last_login ? ftime(u.last_login) : '—' }, { k: 'x', l: '', acts: 1, h: u => u.id === (S.me && S.me.id) ? '' : `<button class="btn btn-sm btn-danger" data-act="staff-del" data-e="${esc(u.email)}">${t('revoke')}</button>` }];
+  return `${pageHead(t('nav_users'), t('users_sub'), `<button class="btn btn-primary" data-act="staff-add">${ic('plus', 16)} ${t('add_staff')}</button>`)}
+  <div class="note">${ic('lock', 18)}<div>${t('users_note')}</div></div>${table('staff', cols, S.staff, { empty: empty('users', t('no_data')) })}
+  <div class="card" style="margin-top:14px"><h3>${t('school_admins')}</h3><p class="muted">${t('school_admins_h')}</p></div>`;
+};
+ACT['staff-add'] = () => { const m = modal(t('add_staff'), `<form id="f"><div class="fg"><label>${t('email')}</label><input name="email" type="email" required><div class="hint">${t('n_email_h')}</div></div>${foot()}</form>`); $('#f', m).onsubmit = async e => { e.preventDefault(); await run($('[data-ok]', m), async () => { await rpc('platform_staff_set', { p_email: e.target.email.value, p_enable: true }); closeModal(); await PRE.users(); render(); }, t('saved')); }; };
+ACT['staff-del'] = async el => { if (!await confirmBox(t('confirm_revoke', { e: el.dataset.e }), { danger: 1, ok: t('revoke') })) return; await run(null, async () => { await rpc('platform_staff_set', { p_email: el.dataset.e, p_enable: false }); await PRE.users(); render(); }, t('ok')); };
+
+/* ============ NOTIFICATIONS ============ */
+const NICON = { expiring: 'clock', expired: 'alert', payment_pending: 'cash', payment_verified: 'check', new_school: 'school', backup_failed: 'database' };
+VIEW.notifications = () => {
+  const f = F('notif'), list = S.notifs.filter(n => f.only !== '1' || !n.is_read);
+  return `${pageHead(t('nav_notif'), t('notif_sub'), `<button class="btn" data-act="notif-readall" ${unread() ? '' : 'disabled'}>${ic('check', 16)} ${t('mark_all')}</button>`)}
+  <div class="note">${ic('mail', 18)}<div>${t('email_note')}</div></div>
+  <div class="bar"><label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-b="notif.only" value="1" ${f.only === '1' ? 'checked' : ''}> ${t('only_unread')}</label></div>
+  ${list.length ? `<div class="card list">${list.map(n => `<div class="it" style="${n.is_read ? 'opacity:.7' : ''}"><div class="dot c-${esc(n.severity)}">${ic(NICON[n.kind] || 'bell')}</div><div class="tx"><b>${esc(n.title)}</b><span class="muted">${esc([n.school_name, n.body].filter(Boolean).join(' · '))}</span></div><span class="tiny">${ftime(n.created_at)}</span>${n.is_read ? '' : `<button class="btn btn-sm" data-act="notif-read" data-id="${esc(n.id)}">${ic('check', 14)}</button>`}${n.school_id ? `<button class="btn btn-sm" data-act="school-view" data-id="${esc(n.school_id)}">${ic('eye', 14)}</button>` : ''}</div>`).join('')}</div>` : empty('bell', t('no_notif'))}`;
+};
+ACT['notif-read'] = async el => { await run(null, async () => { await rpc('platform_notifications_read', { p_id: el.dataset.id }); const n = S.notifs.find(x => x.id === el.dataset.id); if (n) n.is_read = true; render(); }); };
+ACT['notif-readall'] = async () => { await run(null, async () => { await rpc('platform_notifications_read', { p_id: null }); S.notifs.forEach(n => { n.is_read = true; }); render(); }, t('ok')); };
+/* ============ REPORTS ============ */
+const REPORTS = ['revenue', 'growth', 'status', 'subs', 'payments', 'outstanding'];
+function period() {
+  const f = F('rep'), td = today(), y = td.slice(0, 4), mo = td.slice(0, 7), p = f.p || 'year';
+  if (p === 'month') return [mo + '-01', mo + '-31']; if (p === 'lastmonth') { const lm = lastMonths(2)[0]; return [lm + '-01', lm + '-31']; }
+  if (p === 'last12') return [lastMonths(12)[0] + '-01', td]; if (p === 'all') return ['0000-01-01', '9999-12-31'];
+  if (p === 'custom') return [f.from || '0000-01-01', f.to || '9999-12-31']; return [y + '-01-01', y + '-12-31'];
+}
+const monthRange = (a, b) => { const out = []; let [y, m] = a.split('-').map(Number); const [y2, m2] = b.split('-').map(Number); while ((y < y2 || (y === y2 && m <= m2)) && out.length < 60) { out.push(y + '-' + String(m).padStart(2, '0')); m++; if (m > 12) { m = 1; y++; } } return out; };
+const inRange = (d, [a, b]) => d >= a && d <= b;
+function buildReport() {
+  const r = S.report, [a, b] = period(), rg = [a, b], c = cur();
+  if (r === 'revenue') {
+    const ver = verifiedPays().filter(p => inRange(p.paid_on, rg)), ms = ver.length ? monthRange(ver.map(p => p.paid_on.slice(0, 7)).sort()[0], ver.map(p => p.paid_on.slice(0, 7)).sort().pop()) : [];
+    const rows = ms.map(m => { const x = ver.filter(p => p.paid_on.slice(0, 7) === m); return [m, x.length, sumBy(x), sumCur(x, c)]; });
+    return { csv: [['Month', 'Payments', 'Amount', 'Amount (' + c + ')']].concat(rows.map(x => [x[0], x[1], x[2], x[3]])), html: `<div class="grid g3" style="margin-bottom:14px"><div class="card"><span class="muted">${t('total')}</span><h3>${sumBy(ver)}</h3></div><div class="card"><span class="muted">${t('count')}</span><h3>${ver.length}</h3></div><div class="card"><span class="muted">${t('avg_pay')}</span><h3>${ver.length ? money(sumCur(ver, c) / Math.max(1, ver.filter(p => p.currency === c).length), c) : '—'}</h3></div></div>
+      ${ms.length ? `<div class="card" style="margin-bottom:14px">${barChart(rows.map(x => x[3]), ms, { fmt: v => money(v, c), label: t('r_revenue') })}</div><div class="card"><div class="tw"><table><thead><tr><th>${t('month')}</th><th class="r">${t('count')}</th><th class="r">${t('amount')}</th></tr></thead><tbody>${rows.map(x => `<tr><td>${x[0]}</td><td class="r">${x[1]}</td><td class="r">${x[2]}</td></tr>`).join('')}</tbody></table></div></div>` : empty('chart', t('no_data'))}` };
+  }
+  if (r === 'growth') {
+    const L = S.schools.filter(s => inRange(toDateInput(s.created_at), rg)), ms = L.length ? monthRange(L.map(s => toDateInput(s.created_at).slice(0, 7)).sort()[0], L.map(s => toDateInput(s.created_at).slice(0, 7)).sort().pop()) : [];
+    const rows = ms.map(m => [m, L.filter(s => toDateInput(s.created_at).slice(0, 7) === m).length, S.schools.filter(s => toDateInput(s.created_at).slice(0, 7) <= m).length]);
+    return { csv: [['Month', 'New schools', 'Total schools']].concat(rows), html: `<div class="grid g3" style="margin-bottom:14px"><div class="card"><span class="muted">${t('new_in_period')}</span><h3>${L.length}</h3></div><div class="card"><span class="muted">${t('k_total')}</span><h3>${S.schools.length}</h3></div></div>
+      ${ms.length ? `<div class="card" style="margin-bottom:14px">${lineChart(rows.map(x => x[1]), ms, { label: t('r_growth') })}</div><div class="card"><div class="tw"><table><thead><tr><th>${t('month')}</th><th class="r">${t('new_schools')}</th><th class="r">${t('k_total')}</th></tr></thead><tbody>${rows.map(x => `<tr><td>${x[0]}</td><td class="r">${x[1]}</td><td class="r">${x[2]}</td></tr>`).join('')}</tbody></table></div></div>` : empty('chart', t('no_data'))}` };
+  }
+  if (r === 'status') {
+    const L = S.schools, cnt = s => L.filter(x => effStatus(x) === s).length;
+    return { csv: [['School', 'Status', 'Plan', 'Ends']].concat(L.map(s => [s.name, effStatus(s), s.plan, toDateInput(s.subscription_ends_at)])), html: `<div class="card" style="margin-bottom:14px">${donut(['active', 'trial', 'grace', 'expired', 'suspended'].map((k, i) => ({ l: t('st_' + k), v: cnt(k), c: ['#16a34a', '#2563eb', '#f59e0b', '#d97706', '#dc2626'][i] })), { center: t('k_total') })}</div>
+      <div class="card"><div class="tw"><table><thead><tr><th>${t('school')}</th><th>${t('status')}</th><th>${t('plan')}</th><th>${t('ends')}</th></tr></thead><tbody>${L.map(s => `<tr><td>${esc(s.name)}</td><td>${stChip(effStatus(s))}</td><td>${esc(planName(s.plan))}</td><td>${esc(subLine(s))}</td></tr>`).join('')}</tbody></table></div></div>` };
+  }
+  if (r === 'subs') {
+    const ver = verifiedPays().filter(p => inRange(p.paid_on, rg)), codes = [...new Set(S.schools.map(s => s.plan).concat(S.plans.map(p => p.code)))];
+    const rows = codes.map(k => { const sc = S.schools.filter(s => s.plan === k); return [planName(k), sc.length, sc.filter(s => accessOK(s)).length, sumBy(ver.filter(p => p.plan_code === k))]; });
+    const soon = S.schools.filter(s => daysLeft(s) !== null && daysLeft(s) >= 0 && daysLeft(s) <= 30 && ['active', 'trial'].includes(s.status));
+    return { csv: [['Plan', 'Schools', 'With access', 'Revenue in period']].concat(rows).concat([[], ['Expiring in 30 days'], ['School', 'Ends']]).concat(soon.map(s => [s.name, toDateInput(s.subscription_ends_at)])), html: `<div class="card" style="margin-bottom:14px"><div class="tw"><table><thead><tr><th>${t('plan')}</th><th class="r">${t('schools')}</th><th class="r">${t('with_access')}</th><th class="r">${t('r_revenue')}</th></tr></thead><tbody>${rows.map(x => `<tr><td>${esc(x[0])}</td><td class="r">${x[1]}</td><td class="r">${x[2]}</td><td class="r">${x[3]}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="card"><h3>${t('expiring_30')}</h3>${soon.length ? soon.map(s => `<div class="it"><div class="tx"><b>${esc(s.name)}</b></div><span class="muted">${esc(subLine(s))}</span></div>`).join('') : `<div class="muted">${t('alerts_none')}</div>`}</div>` };
+  }
+  if (r === 'payments') {
+    const list = S.pays.filter(p => inRange(p.paid_on, rg));
+    return { csv: [['Date', 'School', 'Amount', 'Currency', 'Method', 'Reference', 'Status', 'Invoice']].concat(list.map(p => [p.paid_on, p.school_name, p.amount, p.currency, p.method, p.reference, p.status, p.invoice_no])), html: list.length ? `<div class="card"><div class="tw"><table><thead><tr><th>${t('date')}</th><th>${t('school')}</th><th class="r">${t('amount')}</th><th>${t('method')}</th><th>${t('status')}</th></tr></thead><tbody>${list.map(p => `<tr><td>${fdate(p.paid_on)}</td><td>${esc(p.school_name)}</td><td class="r">${money(p.amount, p.currency)}</td><td>${esc(t('m_' + p.method))}</td><td>${payChip(p.status)}</td></tr>`).join('')}</tbody></table></div></div>` : empty('cash', t('no_pay')) };
+  }
+  const pend = S.pays.filter(p => p.status === 'pending'), od = S.schools.filter(s => ['expired', 'grace'].includes(effStatus(s)) && s.status !== 'suspended');
+  const lastPay = id => verifiedPays().filter(p => p.school_id === id).sort((x, y) => y.paid_on.localeCompare(x.paid_on))[0];
+  return { csv: [['Type', 'School', 'Amount / Days overdue', 'Reference / Last payment']].concat(pend.map(p => ['Pending payment', p.school_name, money(p.amount, p.currency), p.reference || ''])).concat(od.map(s => ['Expired / grace', s.name, Math.max(0, -daysLeft(s)), lastPay(s.id) ? lastPay(s.id).paid_on : ''])),
+    html: `<div class="card" style="margin-bottom:14px"><h3>${t('pend_pay')} (${pend.length})</h3>${pend.length ? pend.map(p => `<div class="it"><div class="tx"><b>${esc(p.school_name)}</b><span class="muted">${esc(p.reference || '')} · ${fdate(p.paid_on)}</span></div><b>${money(p.amount, p.currency)}</b></div>`).join('') : `<div class="muted">${t('alerts_none')}</div>`}</div>
+      <div class="card"><h3>${t('overdue_schools')} (${od.length})</h3>${od.length ? od.map(s => `<div class="it"><div class="tx"><b>${esc(s.name)}</b><span class="muted">${t('last_payment')}: ${lastPay(s.id) ? fdate(lastPay(s.id).paid_on) : '—'}</span></div>${stChip(effStatus(s))}<span class="muted">${t('days_over', { n: Math.max(0, -daysLeft(s)) })}</span></div>`).join('') : `<div class="muted">${t('alerts_none')}</div>`}</div>` };
+}
+VIEW.reports = () => {
+  const f = F('rep'), rep = buildReport(), p = f.p || 'year';
+  return `${pageHead(t('nav_reports'), t('reports_sub'), `<button class="btn" data-act="rep-csv">${ic('download', 16)} CSV / Excel</button><button class="btn btn-primary" data-act="rep-print">${ic('print', 16)} PDF</button>`)}
+  <div class="tabs">${REPORTS.map(k => `<button class="tab ${S.report === k ? 'on' : ''}" data-act="rep-tab" data-k="${k}">${t('r_' + k)}</button>`).join('')}</div>
+  ${['revenue', 'growth', 'subs', 'payments'].includes(S.report) ? `<div class="bar"><select data-b="rep.p">${opts([['month', t('p_month')], ['lastmonth', t('p_lastmonth')], ['year', t('p_year')], ['last12', t('p_last12')], ['all', t('p_all')], ['custom', t('p_custom')]], p)}</select>${p === 'custom' ? `<input type="date" data-b="rep.from" value="${esc(f.from || '')}"><input type="date" data-b="rep.to" value="${esc(f.to || '')}">` : ''}</div>` : ''}
+  <div id="report-body">${rep.html}</div>`;
+};
+ACT['rep-tab'] = el => { S.report = el.dataset.k; render(); };
+ACT['rep-csv'] = () => downloadCSV('report-' + S.report, buildReport().csv);
+ACT['rep-print'] = () => { const [a, b] = period(); printHTML(`<div class="doc"><h1>${esc(t('r_' + S.report))}</h1><div class="muted">${esc(S.settings.company_name || S.settings.platform_name || '')} · ${['revenue', 'growth', 'subs', 'payments'].includes(S.report) ? esc(a.slice(0, 4) === '0000' ? t('p_all') : a + ' → ' + b) : fdate(new Date())}</div>${$('#report-body').innerHTML}</div>`); };
+
+/* ============ SUPPORT ============ */
+PRE.support = async () => { const r = await sb.from('platform_tickets').select('*').order('updated_at', { ascending: false }).limit(500); if (r.error) throw r.error; S.tickets = r.data || []; };
+VIEW.support = () => {
+  const f = F('tk'), q = (f.q || '').toLowerCase(), rows = S.tickets.filter(x => (!q || (x.subject + ' ' + (x.school_name || '')).toLowerCase().includes(q)) && (!f.status || x.status === f.status) && (!f.priority || x.priority === f.priority) && (!f.category || x.category === f.category) && (!f.school || x.school_id === f.school));
+  const cols = [{ k: 's', l: t('subject'), v: x => x.subject.toLowerCase(), h: x => `<b>${esc(x.subject)}</b><div class="tiny">${esc(x.school_name || '—')}</div>` }, { k: 'c', l: t('category'), v: x => x.category, h: x => esc(t('tc_' + x.category)) },
+    { k: 'p', l: t('priority'), v: x => ['low', 'normal', 'high', 'urgent'].indexOf(x.priority), h: x => chip(x.priority, t('tp_' + x.priority)) }, { k: 'st', l: t('status'), v: x => x.status, h: x => chip(x.status, t('ts_' + x.status)) },
+    { k: 'u', l: t('updated'), v: x => x.updated_at, h: x => ftime(x.updated_at) }, { k: 'x', l: '', acts: 1, h: x => `<button class="btn btn-sm" data-act="ticket-open" data-id="${esc(x.id)}">${ic('eye', 14)} ${t('open')}</button>` }];
+  const cnt = s => S.tickets.filter(x => x.status === s).length;
+  return `${pageHead(t('nav_support'), t('support_sub'), `<button class="btn btn-primary" data-act="ticket-new">${ic('plus', 16)} ${t('new_ticket')}</button>`)}
+  <div class="grid g3" style="margin-bottom:14px">${['open', 'pending', 'resolved'].map(s => `<div class="card kpi"><div class="ico ${s === 'open' ? 'i-blue' : s === 'pending' ? 'i-amber' : 'i-green'}">${ic(s === 'resolved' ? 'check' : 'life', 22)}</div><div><b>${cnt(s)}</b><span>${t('ts_' + s)}</span></div></div>`).join('')}</div>
+  <div class="bar"><input type="search" data-b="tk.q" value="${esc(f.q)}" placeholder="${esc(t('search_tickets'))}"><select data-b="tk.status"><option value="">${t('all_status')}</option>${opts(['open', 'pending', 'resolved'].map(x => [x, t('ts_' + x)]), f.status)}</select>
+    <select data-b="tk.priority"><option value="">${t('all_priority')}</option>${opts(['low', 'normal', 'high', 'urgent'].map(x => [x, t('tp_' + x)]), f.priority)}</select><select data-b="tk.category"><option value="">${t('all_category')}</option>${opts(['general', 'billing', 'technical', 'account', 'training', 'other'].map(x => [x, t('tc_' + x)]), f.category)}</select></div>
+  ${table('tk', cols, rows, { empty: empty('life', S.tickets.length ? t('no_match') : t('no_tickets')) })}`;
+};
+ACT['ticket-new'] = el => {
+  const sid = el && el.dataset ? el.dataset.id : '';
+  const m = modal(t('new_ticket'), `<form id="f"><div class="fg"><label>${t('school')}</label><select name="school" required>${opts(S.schools.map(s => [s.id, s.name]), sid)}</select></div><div class="fg"><label>${t('subject')}</label><input name="subject" required minlength="3" maxlength="200"></div>
+    <div class="row2"><div class="fg"><label>${t('category')}</label><select name="cat">${opts(['general', 'billing', 'technical', 'account', 'training', 'other'].map(x => [x, t('tc_' + x)]), 'general')}</select></div><div class="fg"><label>${t('priority')}</label><select name="pr">${opts(['low', 'normal', 'high', 'urgent'].map(x => [x, t('tp_' + x)]), 'normal')}</select></div></div>
+    <div class="fg"><label>${t('message')}</label><textarea name="body" required maxlength="5000"></textarea></div>${foot(t('create'))}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = e.target; await run($('[data-ok]', m), async () => { await rpc('platform_ticket_create', { p_school: f.school.value, p_subject: f.subject.value, p_category: f.cat.value, p_priority: f.pr.value, p_body: f.body.value }); closeModal(); await PRE.support(); await reload(true); if (S.page !== 'support') go('support'); }, t('created')); };
+};
+async function openTicket(id) {
+  const x = S.tickets.find(v => v.id === id); if (!x) return;
+  const r = await sb.from('platform_ticket_messages').select('*').eq('ticket_id', id).order('created_at'); if (r.error) return toast(errTxt(r.error), true);
+  const m = modal(esc(x.subject), `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${chip(x.status, t('ts_' + x.status))}${chip(x.priority, t('tp_' + x.priority))}<span class="muted">${esc(x.school_name || '')} · ${esc(t('tc_' + x.category))}</span></div>
+    <div class="msgs">${(r.data || []).map(g => `<div class="msg"><small>${esc(g.author_email || '')} · ${ftime(g.created_at)}</small>${esc(g.body)}</div>`).join('')}</div>
+    <form id="f"><div class="fg"><label>${t('reply')}</label><textarea name="body" maxlength="5000"></textarea></div><div class="fg"><label>${t('status')}</label><select name="st">${opts(['open', 'pending', 'resolved'].map(s => [s, t('ts_' + s)]), x.status)}</select></div>${foot(t('send'))}</form>`, { lg: 1 });
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = e.target; if (!f.body.value.trim() && f.st.value === x.status) return closeModal(); await run($('[data-ok]', m), async () => { await rpc('platform_ticket_reply', { p_ticket: id, p_body: f.body.value, p_status: f.st.value }); closeModal(); await PRE.support(); render(); }, t('saved')); };
+}
+ACT['ticket-open'] = el => openTicket(el.dataset.id);
+
+/* ============ ACTIVITY LOGS ============ */
+VIEW.logs = () => {
+  const f = F('logs'), q = (f.q || '').toLowerCase(), acts = [...new Set(S.logs.map(l => l.action))].sort();
+  const rows = S.logs.filter(l => (!q || [l.actor_email, l.school_name, l.details, logLabel(l)].join(' ').toLowerCase().includes(q)) && (!f.action || l.action === f.action) && (!f.from || toDateInput(l.created_at) >= f.from) && (!f.to || toDateInput(l.created_at) <= f.to));
+  const cols = [{ k: 't', l: t('time'), v: l => l.created_at, h: l => `<span class="muted">${ftime(l.created_at)}</span>` }, { k: 'a', l: t('action'), v: l => l.action, h: l => `<b>${esc(logLabel(l))}</b>` }, { k: 's', l: t('school'), v: l => l.school_name || '', h: l => esc(l.school_name || '—') },
+    { k: 'd', l: t('details'), h: l => `<span class="muted">${esc(l.details || '')}</span>` }, { k: 'u', l: t('actor'), v: l => l.actor_email || '', h: l => esc(l.actor_email || t('system')) }];
+  return `${pageHead(t('nav_logs'), t('logs_sub'), `<button class="btn" data-act="export-logs">${ic('download', 16)} CSV</button>`)}
+  <div class="bar"><input type="search" data-b="logs.q" value="${esc(f.q)}" placeholder="${esc(t('search_logs'))}"><select data-b="logs.action"><option value="">${t('all_actions')}</option>${opts(acts.map(a => [a, logLabel({ action: a })]), f.action)}</select><input type="date" data-b="logs.from" value="${esc(f.from || '')}"><input type="date" data-b="logs.to" value="${esc(f.to || '')}"></div>
+  ${table('logs', cols, rows, { size: 15, empty: empty('activity', t('no_log')) })}`;
+};
+ACT['export-logs'] = () => downloadCSV('activity-log', [['Time', 'Action', 'School', 'Details', 'Actor']].concat(S.logs.map(l => [l.created_at, l.action, l.school_name, l.details, l.actor_email])));
+
+/* ============ BACKUP & RECOVERY ============ */
+PRE.backup = async () => { const r = await sb.from('platform_backups').select('*').order('taken_at', { ascending: false }).limit(100); if (r.error) throw r.error; S.backups = r.data || []; };
+VIEW.backup = () => {
+  const last = S.backups.find(b => b.status === 'success'), tested = S.backups.find(b => b.restore_tested);
+  const cols = [{ k: 'd', l: t('date'), v: b => b.taken_at, h: b => ftime(b.taken_at) }, { k: 'k', l: t('type'), h: b => esc(t('bk_' + b.kind)) }, { k: 's', l: t('status'), h: b => chip(b.status, t('bs_' + b.status)) }, { k: 'l', l: t('location'), h: b => esc(b.location || '—') },
+    { k: 'r', l: t('restore_tested'), h: b => b.restore_tested ? `${chip('success', t('yes'))} <span class="tiny">${fdate(b.restore_tested_at)}</span>` : `<button class="btn btn-sm" data-act="bk-tested" data-id="${esc(b.id)}">${t('mark_tested')}</button>` }, { k: 'n', l: t('note'), h: b => `<span class="muted">${esc(b.note || '')}</span>` }];
+  return `${pageHead(t('nav_backup'), t('backup_sub'), `<button class="btn" data-act="export-all">${ic('download', 16)} ${t('export_data')}</button><button class="btn btn-primary" data-act="bk-add">${ic('plus', 16)} ${t('log_backup')}</button>`)}
+  <div class="note warn">${ic('alert', 18)}<div><b>${t('bk_honest_t')}</b><br>${t('bk_honest')}</div></div>
+  <div class="grid g3" style="margin-bottom:14px"><div class="card kpi"><div class="ico ${last ? 'i-green' : 'i-red'}">${ic('database', 22)}</div><div><b style="font-size:16px">${last ? fdate(last.taken_at) : t('none_logged')}</b><span>${t('last_backup')}</span></div></div>
+    <div class="card kpi"><div class="ico ${tested ? 'i-green' : 'i-amber'}">${ic('refresh', 22)}</div><div><b style="font-size:16px">${tested ? fdate(tested.restore_tested_at) : t('never')}</b><span>${t('last_restore_test')}</span></div></div></div>
+  ${table('bk', cols, S.backups, { empty: empty('database', t('no_backups')) })}
+  <div class="card" style="margin-top:14px"><h3>${t('dr_title')}</h3><ol class="muted" style="line-height:1.8">${[1, 2, 3, 4, 5, 6].map(i => `<li>${t('dr_' + i)}</li>`).join('')}</ol></div>`;
+};
+ACT['bk-add'] = () => { const m = modal(t('log_backup'), `<form id="f"><div class="row2"><div class="fg"><label>${t('type')}</label><select name="kind">${opts([['manual', t('bk_manual')], ['automatic', t('bk_automatic')]], 'manual')}</select></div><div class="fg"><label>${t('status')}</label><select name="st">${opts(['success', 'failed', 'unknown'].map(x => [x, t('bs_' + x)]), 'success')}</select></div></div>
+  <div class="fg"><label>${t('date')}</label><input type="datetime-local" name="at" value="${new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 16)}"></div><div class="fg"><label>${t('location')}</label><input name="loc" placeholder="Supabase Dashboard > Database > Backups"></div><div class="fg"><label>${t('note')}</label><input name="note"></div>
+  <label class="muted" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="rt" style="margin-top:4px"> <span>${t('restore_done')}</span></label>${foot()}</form>`);
+  $('#f', m).onsubmit = async e => { e.preventDefault(); const f = e.target; await run($('[data-ok]', m), async () => { await rpc('platform_backup_log', { p_kind: f.kind.value, p_status: f.st.value, p_taken_at: f.at.value ? new Date(f.at.value + ':00+03:00').toISOString() : null, p_location: f.loc.value, p_note: f.note.value, p_restore_tested: f.rt.checked }); closeModal(); await PRE.backup(); render(); }, t('saved')); }; };
+ACT['bk-tested'] = async el => { if (!await confirmBox(t('confirm_tested'))) return; await run(null, async () => { await rpc('platform_backup_mark_tested', { p_id: el.dataset.id }); await PRE.backup(); render(); }, t('ok')); };
+ACT['export-all'] = () => { downloadCSV('platform-schools', [['id', 'name', 'status', 'plan', 'ends', 'students', 'teachers', 'admins']].concat(S.schools.map(s => [s.id, s.name, s.status, s.plan, s.subscription_ends_at, s.students, s.teachers, s.admin_emails]))); setTimeout(() => downloadCSV('platform-payments', [['id', 'school', 'amount', 'currency', 'method', 'reference', 'status', 'invoice', 'receipt', 'paid_on']].concat(S.pays.map(p => [p.id, p.school_name, p.amount, p.currency, p.method, p.reference, p.status, p.invoice_no, p.receipt_no, p.paid_on]))), 600); };
+
+/* ============ SECURITY CENTER ============ */
+PRE.security = async () => { S.sec = await rpc('platform_security_report'); await loadMfa(); };
+async function loadMfa() { S.mfa = []; try { const r = await sb.auth.mfa.listFactors(); S.mfa = (r.data && r.data.totp) || []; } catch (e) { } }
+VIEW.security = () => {
+  const r = S.sec || {}, list = a => (a || []).join(', '), mfaOn = (S.mfa || []).some(f => f.status === 'verified');
+  const checks = [
+    [!(r.tables_without_rls || []).length ? 'pass' : 'fail', t('sc_rls'), (r.tables_without_rls || []).length ? t('sc_rls_bad', { l: list(r.tables_without_rls) }) : t('sc_rls_ok', { n: r.tables_total, p: r.policies })],
+    [!(r.anon_table_access || []).length ? 'pass' : 'fail', t('sc_anon_t'), (r.anon_table_access || []).length ? list(r.anon_table_access) : t('sc_none')],
+    [!(r.anon_functions || []).length ? 'pass' : 'fail', t('sc_anon_f'), (r.anon_functions || []).length ? list(r.anon_functions) : t('sc_none')],
+    [r.super_admins >= 2 ? 'pass' : 'warn', t('sc_admins'), t('sc_admins_d', { n: r.super_admins })],
+    [!(r.schools_without_admin || []).length ? 'pass' : 'warn', t('sc_noadmin'), (r.schools_without_admin || []).length ? list(r.schools_without_admin) : t('sc_none')],
+    [mfaOn ? 'pass' : 'warn', t('sc_mfa'), mfaOn ? t('sc_mfa_on') : t('sc_mfa_off')], ['pass', t('sc_key'), t('sc_key_d')]];
+  const ico = { pass: 'check', warn: 'alert', fail: 'x' }, logins = S.logs.filter(l => l.action === 'login').slice(0, 10);
+  return `${pageHead(t('nav_sec'), t('sec_sub'), `<button class="btn" data-act="sec-refresh">${ic('refresh', 16)} ${t('refresh')}</button><button class="btn btn-danger" data-act="signout-others">${ic('logout', 16)} ${t('signout_others')}</button>`)}
+  <div class="card"><h3 style="margin-bottom:6px">${t('sec_checks')}</h3><p class="muted" style="margin:0 0 6px">${t('sec_live')}</p>${checks.map(c => `<div class="it"><div class="dot c-${c[0] === 'pass' ? 'success' : c[0] === 'warn' ? 'warning' : 'danger'}">${ic(ico[c[0]])}</div><div class="tx"><b>${esc(c[1])}</b><span class="muted" style="white-space:normal">${esc(c[2])}</span></div>${chip(c[0] === 'pass' ? 'success' : c[0] === 'warn' ? 'warning' : 'danger', t('sc_' + c[0]))}</div>`).join('')}</div>
+  <div class="grid g2" style="margin-top:14px"><div class="card"><h3>${t('login_history')} <span class="tiny">(${t('logins_7d', { n: r.logins_7d || 0 })})</span></h3><div class="list">${logins.length ? logins.map(l => `<div class="it"><div class="dot c-info">${ic('lock')}</div><div class="tx"><b>${esc(l.actor_email || '')}</b></div><span class="tiny">${ftime(l.created_at)}</span></div>`).join('') : `<div class="muted">${t('no_log')}</div>`}</div><p class="tiny" style="margin-top:8px">${t('failed_note')}</p></div>
+    <div class="card"><h3>${t('sec_info')}</h3><ul class="muted" style="line-height:1.8;padding-left:18px">${[1, 2, 3, 4].map(i => `<li>${t('si_' + i)}</li>`).join('')}</ul></div></div>`;
+};
+ACT['sec-refresh'] = async () => { await run(null, async () => { await PRE.security(); render(); }); };
+ACT['signout-others'] = async () => { if (!await confirmBox(t('confirm_signout_others'), { danger: 1, ok: t('signout_others') })) return; await run(null, async () => { const { error } = await sb.auth.signOut({ scope: 'others' }); if (error) throw error; }, t('ok')); };
+
+/* ============ SETTINGS ============ */
+const SET_KEYS = ['platform_name', 'company_name', 'company_email', 'company_phone', 'company_address', 'currency', 'timezone', 'default_trial_days', 'default_grace_days', 'reminder_days', 'payment_instructions', 'invoice_footer', 'maintenance_note'];
+VIEW.settings = () => {
+  const v = k => esc(S.settings[k] || ''), inp = (k, label, type = 'text', hint = '') => `<div class="fg"><label>${t(label)}</label><input name="${k}" type="${type}" value="${v(k)}">${hint ? `<div class="hint">${t(hint)}</div>` : ''}</div>`, ta = (k, label, hint = '') => `<div class="fg"><label>${t(label)}</label><textarea name="${k}">${v(k)}</textarea>${hint ? `<div class="hint">${t(hint)}</div>` : ''}</div>`;
+  return `${pageHead(t('nav_settings'), t('settings_sub'))}<form id="sf"><div class="grid g2"><div class="card"><h3 style="margin-bottom:10px">${t('set_platform')}</h3>${inp('platform_name', 'set_pname')}${inp('company_name', 'set_cname')}${inp('company_email', 'email', 'email')}${inp('company_phone', 'phone')}${inp('company_address', 'address')}</div>
+    <div class="card"><h3 style="margin-bottom:10px">${t('set_defaults')}</h3><div class="row2">${inp('currency', 'currency')}${inp('timezone', 'set_tz')}</div><div class="row2">${inp('default_trial_days', 'set_trial', 'number')}${inp('default_grace_days', 'set_grace', 'number')}</div>${inp('reminder_days', 'set_reminder', 'text', 'set_reminder_h')}${ta('maintenance_note', 'set_maint')}</div></div>
+    <div class="card" style="margin-top:14px"><h3 style="margin-bottom:10px">${t('set_billing')}</h3>${ta('payment_instructions', 'set_payinstr', 'set_payinstr_h')}${inp('invoice_footer', 'set_footer')}<div class="acts" style="justify-content:flex-end"><button class="btn btn-primary" id="sfb">${t('save')}</button></div></div></form>
+  <div class="card" style="margin-top:14px"><h3>${t('set_local')}</h3><p class="muted">${t('set_local_h')}</p><div class="acts" style="justify-content:flex-start"><button class="btn" data-act="lang">${ic('globe', 16)} ${LANG === 'so' ? 'English' : 'Soomaali'}</button><button class="btn" data-act="theme">${ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon', 16)} ${t('theme')}</button></div></div>`;
+};
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'sf') return; e.preventDefault(); const f = new FormData(e.target);
+  await run($('#sfb'), async () => { for (const k of SET_KEYS) { const val = String(f.get(k) ?? ''); if (val !== (S.settings[k] || '')) { await rpc('platform_setting_set', { p_key: k, p_value: val }); S.settings[k] = val; } } await reload(true); }, t('saved'));
+});
+
+/* ============ PROFILE ============ */
+PRE.profile = async () => { await loadMfa(); };
+VIEW.profile = () => {
+  const me = S.me || {}, fac = S.mfa || [];
+  return `${pageHead(t('nav_profile'), t('profile_sub'))}<div class="grid g2"><div class="card"><div style="display:flex;gap:14px;align-items:center;margin-bottom:12px"><div class="av" style="width:56px;height:56px;font-size:20px;cursor:default">${esc(initials(me.full_name || me.email))}</div><div><h3>${esc(me.full_name || me.email)}</h3><div class="muted">${esc(me.email)} · ${t('role_super')}</div></div></div>
+      <form id="pf"><div class="fg"><label>${t('name')}</label><input name="name" value="${esc(me.full_name || '')}" maxlength="120"></div><button class="btn btn-primary">${t('save')}</button></form>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><form id="ef"><div class="fg"><label>${t('new_email')}</label><input name="email" type="email" required><div class="hint">${t('email_change_h')}</div></div><button class="btn">${t('change_email')}</button></form></div>
+    <div class="card"><h3 style="margin-bottom:8px">${t('change_pw')}</h3><form id="pwf"><div class="fg"><label>${t('new_pw')}</label><input name="p1" type="password" minlength="8" required autocomplete="new-password"></div><div class="fg"><label>${t('confirm_pw')}</label><input name="p2" type="password" minlength="8" required autocomplete="new-password"></div><button class="btn btn-primary">${t('change_pw')}</button></form>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><h3 style="margin-bottom:6px">${t('sessions')}</h3><p class="muted">${t('sessions_h')}</p><button class="btn btn-danger" data-act="signout-others">${ic('logout', 16)} ${t('signout_others')}</button></div></div>
+  <div class="card" style="margin-top:14px"><h3>${t('mfa')}</h3><p class="muted">${t('mfa_h')}</p>${fac.length ? fac.map(f => `<div class="it"><div class="dot c-${f.status === 'verified' ? 'success' : 'warning'}">${ic('lock')}</div><div class="tx"><b>${esc(f.friendly_name || 'Authenticator')}</b><span class="muted">${esc(f.status)}</span></div><button class="btn btn-sm btn-danger" data-act="mfa-del" data-id="${esc(f.id)}">${t('remove')}</button></div>`).join('') : ''}${fac.some(f => f.status === 'verified') ? '' : `<button class="btn btn-primary" data-act="mfa-add">${ic('shield', 16)} ${t('mfa_enable')}</button>`}</div>`;
+};
+document.addEventListener('submit', async e => {
+  const id = e.target.id; if (!['pf', 'ef', 'pwf'].includes(id)) return; e.preventDefault(); const f = e.target, b = $('button', f);
+  if (id === 'pf') await run(b, async () => { const { error } = await sb.from('profiles').update({ full_name: f.name.value.trim() || null }).eq('id', S.me.id); if (error) throw error; S.me.full_name = f.name.value.trim(); render(); }, t('saved'));
+  if (id === 'ef') await run(b, async () => { const { error } = await sb.auth.updateUser({ email: f.email.value.trim() }); if (error) throw error; f.reset(); }, t('email_sent'));
+  if (id === 'pwf') { if (f.p1.value !== f.p2.value) return toast(t('pw_mismatch'), true); await run(b, async () => { const { error } = await sb.auth.updateUser({ password: f.p1.value }); if (error) throw error; f.reset(); }, t('pw_changed')); }
+});
+ACT['mfa-add'] = async () => {
+  await run(null, async () => {
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator ' + Date.now().toString(36) }); if (error) throw error;
+    const m = modal(t('mfa_enable'), `<p class="muted">${t('mfa_scan')}</p><div style="text-align:center"><img alt="QR" src="${esc(data.totp.qr_code)}" width="190" height="190" style="background:#fff;border-radius:12px;padding:8px"></div><p class="tiny" style="word-break:break-all;text-align:center">${esc(data.totp.secret)}</p><form id="f"><div class="fg"><label>${t('mfa_code')}</label><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code"></div>${foot(t('verify'))}</form>`);
+    $('#f', m).onsubmit = async e => { e.preventDefault(); await run($('[data-ok]', m), async () => { const c = await sb.auth.mfa.challenge({ factorId: data.id }); if (c.error) throw c.error; const v = await sb.auth.mfa.verify({ factorId: data.id, challengeId: c.data.id, code: e.target.code.value.trim() }); if (v.error) throw v.error; closeModal(); await loadMfa(); render(); }, t('mfa_on')); };
+  });
+};
+ACT['mfa-del'] = async el => { if (!await confirmBox(t('mfa_remove_confirm'), { danger: 1, ok: t('remove') })) return; await run(null, async () => { const { error } = await sb.auth.mfa.unenroll({ factorId: el.dataset.id }); if (error) throw error; await loadMfa(); render(); }, t('ok')); };
+
+/* ============ HELP ============ */
+VIEW.help = () => `${pageHead(t('nav_help'), t('help_sub'))}${[1, 2, 3, 4, 5, 6, 7, 8].map(i => `<details class="acc" ${i === 1 ? 'open' : ''}><summary>${ic('help', 18)} ${t('h' + i + '_t')}</summary><div class="b">${t('h' + i + '_b')}</div></details>`).join('')}`;
+/* ============ SHELL / ROUTER / AUTH ============ */
+const NAV = [['grp_main', [['dashboard', 'dashboard'], ['schools', 'school'], ['subscriptions', 'repeat'], ['plans', 'tag']]], ['grp_money', [['payments', 'cash'], ['invoices', 'file']]],
+  ['grp_manage', [['users', 'users'], ['notifications', 'bell'], ['reports', 'chart'], ['support', 'life'], ['logs', 'activity']]], ['grp_system', [['backup', 'database'], ['security', 'shield'], ['settings', 'settings'], ['profile', 'user'], ['help', 'help']]]];
+const NAVKEY = { dashboard: 'nav_dashboard', schools: 'nav_schools', subscriptions: 'nav_subs', plans: 'nav_plans', payments: 'nav_pay', invoices: 'nav_inv', users: 'nav_users', notifications: 'nav_notif', reports: 'nav_reports', support: 'nav_support', logs: 'nav_logs', backup: 'nav_backup', security: 'nav_sec', settings: 'nav_settings', profile: 'nav_profile', help: 'nav_help' };
+const badgeFor = p => p === 'notifications' ? unread() : p === 'payments' ? S.pays.filter(x => x.status === 'pending').length : p === 'support' ? S.tickets.filter(x => x.status === 'open').length : 0;
+
+function shell(inner) {
+  const dark = document.documentElement.dataset.theme === 'dark', un = unread(), me = S.me || {};
+  return `<div class="shell"><aside class="side ${S.nav ? 'open' : ''}"><div class="brand"><div class="lg">${ic('school', 22)}</div><div><b>${esc(S.settings.platform_name || t('title'))}</b><span>${t('console')}</span></div></div>
+    <nav class="nav" aria-label="Main">${NAV.map(([g, items]) => `<h6>${t(g)}</h6>${items.map(([p, i]) => { const b = badgeFor(p); return `<a data-act="go" data-p="${p}" class="${S.page === p ? 'on' : ''}" tabindex="0" role="link">${ic(i, 19)}<span>${t(NAVKEY[p])}</span>${b ? `<span class="bd">${b}</span>` : ''}</a>`; }).join('')}`).join('')}</nav></aside>
+    <div class="scrim ${S.nav ? 'open' : ''}" data-act="nav"></div>
+    <div class="main"><header class="topbar"><button class="ib mob" data-act="nav" aria-label="Menu">${ic('menu')}</button><div class="ttl">${t(NAVKEY[S.page])}</div>
+      <div class="gs ${S.gsOpen ? 'show' : ''}"><span class="si">${ic('search', 17)}</span><input data-b="gs.q" value="${esc(S.gq)}" placeholder="${esc(t('gsearch'))}" autocomplete="off" aria-label="${esc(t('gsearch'))}"><div id="gsr" class="gsr" ${S.gq ? '' : 'hidden'}>${searchHTML()}</div></div><span class="sp"></span>
+      <button class="ib mob" data-act="gs-toggle" aria-label="${esc(t('gsearch'))}">${ic('search')}</button>
+      <div style="position:relative" data-menu><button class="ib" data-act="menu" data-m="quick" aria-label="${esc(t('quick'))}">${ic('plus')}</button>${S.menu === 'quick' ? `<div class="menu"><button data-act="school-new">${ic('school', 17)} ${t('newschool')}</button><button data-act="pay-new">${ic('cash', 17)} ${t('recpay')}</button><button data-act="ticket-new">${ic('life', 17)} ${t('new_ticket')}</button></div>` : ''}</div>
+      <button class="ib" data-act="lang" aria-label="Language" title="${LANG === 'so' ? 'English' : 'Soomaali'}"><b style="font-size:12px">${LANG === 'so' ? 'EN' : 'SO'}</b></button>
+      <button class="ib" data-act="theme" aria-label="${esc(t('theme'))}">${ic(dark ? 'sun' : 'moon')}</button>
+      <button class="ib" data-act="go" data-p="notifications" aria-label="${esc(t('nav_notif'))}">${ic('bell')}${un ? `<span class="dt">${un > 99 ? '99+' : un}</span>` : ''}</button>
+      <div style="position:relative" data-menu><button class="av" data-act="menu" data-m="user" aria-label="${esc(t('nav_profile'))}">${esc(initials(me.full_name || me.email))}</button>${S.menu === 'user' ? `<div class="menu"><div style="padding:8px 12px"><b>${esc(me.full_name || me.email || '')}</b><div class="tiny">${esc(me.email || '')}</div></div><a data-act="go" data-p="profile">${ic('user', 17)} ${t('nav_profile')}</a><a data-act="go" data-p="settings">${ic('settings', 17)} ${t('nav_settings')}</a><button data-act="out">${ic('logout', 17)} ${t('out')}</button></div>` : ''}</div></header>
+    <main class="content" id="content">${inner}</main></div></div>`;
+}
+function searchHTML() {
+  const q = S.gq.trim().toLowerCase(); if (!q) return '';
+  const r = [];
+  S.schools.filter(s => (s.name + ' ' + (s.short_name || '') + ' ' + (s.email || '') + ' ' + (s.admin_emails || '')).toLowerCase().includes(q)).slice(0, 5).forEach(s => r.push(`<a data-act="school-view" data-id="${esc(s.id)}">${ic('school', 16)} ${esc(s.name)}<small>${t('nav_schools')}</small></a>`));
+  S.pays.filter(p => [p.reference, p.invoice_no, p.receipt_no, p.school_name].join(' ').toLowerCase().includes(q)).slice(0, 5).forEach(p => r.push(`<a data-act="pay-view" data-id="${esc(p.id)}">${ic('cash', 16)} ${esc(p.invoice_no || money(p.amount, p.currency))} · ${esc(p.school_name)}<small>${t('nav_pay')}</small></a>`));
+  S.tickets.filter(x => (x.subject + ' ' + (x.school_name || '')).toLowerCase().includes(q)).slice(0, 4).forEach(x => r.push(`<a data-act="ticket-open" data-id="${esc(x.id)}">${ic('life', 16)} ${esc(x.subject)}<small>${t('nav_support')}</small></a>`));
+  return r.join('') || `<div class="muted" style="padding:10px">${t('no_match')}</div>`;
+}
+function render() {
+  const a = document.activeElement, key = a && a.dataset && a.dataset.b, pos = a && a.selectionStart, sy = window.scrollY;
+  if (!S.loaded) { app.innerHTML = shell(skeleton()); return; }
+  let inner; try { inner = VIEW[S.page](); } catch (e) { console.error(e); inner = `<div class="err">${esc(errTxt(e))}</div>`; }
+  app.innerHTML = shell(inner);
+  if (key) { const n = $('[data-b="' + key + '"]'); if (n) { n.focus(); try { if (pos != null) n.setSelectionRange(pos, pos); } catch (e) { } } }
+  window.scrollTo(0, sy);
+}
+const PAGES = Object.keys(NAVKEY);
+async function navigate() {
+  let p = (location.hash || '').replace(/^#\/?/, ''); if (!PAGES.includes(p)) p = 'dashboard';
+  S.page = p; S.nav = false; S.menu = null; S.gsOpen = false;
+  if (S.loaded && PRE[p]) { try { await PRE[p](); } catch (e) { toast(errTxt(e), true); } }
+  render(); window.scrollTo(0, 0);
+}
+const go = p => { if (location.hash === '#/' + p) navigate(); else location.hash = '#/' + p; };
+window.addEventListener('hashchange', () => { if (S.user) navigate(); });
+
+/* ---------- data ---------- */
+async function loadAll() {
+  try { await sb.rpc('platform_scan'); } catch (e) { }
+  const q = p => p.then(r => { if (r.error) throw r.error; return r.data || []; });
+  const [sch, pay, logs, plans, notifs, set, tk] = await Promise.all([q(sb.rpc('platform_schools')), q(sb.rpc('platform_payments_list')), q(sb.rpc('platform_logs_list', { p_limit: 2000 })), q(sb.from('platform_plans').select('*').order('sort_order')),
+    q(sb.from('platform_notifications').select('*').order('created_at', { ascending: false }).limit(300)), q(sb.from('platform_settings').select('*')), q(sb.from('platform_tickets').select('*').order('updated_at', { ascending: false }).limit(500))]);
+  S.schools = sch; S.pays = pay; S.logs = logs; S.plans = plans; S.notifs = notifs; S.tickets = tk; S.settings = {}; set.forEach(x => { S.settings[x.key] = x.value; });
+}
+async function reload(quiet) { try { await loadAll(); } catch (e) { toast(errTxt(e), true); } render(); }
+
+/* ---------- login / boot ---------- */
+function showLogin(msg) {
+  S.user = null; S.loaded = false;
+  app.innerHTML = `<div class="login"><div class="art"><div class="brand" style="padding:0"><div class="lg">${ic('school', 22)}</div><div><b>${esc(t('title'))}</b><span>${t('console')}</span></div></div><h1>${t('login_hero')}</h1><p>${t('login_sub')}</p></div>
+    <div class="frm"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h2 style="font-size:20px">${t('login')}</h2><button class="ib" data-act="lang" aria-label="Language"><b style="font-size:12px">${LANG === 'so' ? 'EN' : 'SO'}</b></button></div>
+    ${msg ? `<div class="err" role="alert">${esc(msg)}</div>` : ''}<form id="lf"><div class="fg"><label>${t('email')}</label><input id="le" type="email" autocomplete="username" required></div><div class="fg"><label>${t('pass')}</label><input id="lp" type="password" autocomplete="current-password" required></div><button class="btn btn-primary" style="width:100%;justify-content:center" id="lb">${t('login')}</button></form></div></div></div>`;
+  $('#lf').onsubmit = async e => { e.preventDefault(); await busy($('#lb'), async () => { const { error } = await sb.auth.signInWithPassword({ email: $('#le').value.trim(), password: $('#lp').value }); if (error) return showLogin(error.message); await boot(true); }); };
+}
+function showMfa() {
+  app.innerHTML = `<div class="login"><div class="art"><h1>${t('mfa_title')}</h1><p>${t('mfa_login_h')}</p></div><div class="frm"><div class="card"><h2 style="font-size:20px;margin-bottom:12px">${t('mfa_title')}</h2><form id="mf"><div class="fg"><label>${t('mfa_code')}</label><input id="mc" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" autofocus></div><button class="btn btn-primary" style="width:100%;justify-content:center" id="mb">${t('verify')}</button> <button type="button" class="btn" style="width:100%;justify-content:center;margin-top:8px" data-act="out">${t('out')}</button></form></div></div></div>`;
+  $('#mf').onsubmit = async e => { e.preventDefault(); await busy($('#mb'), async () => { try { const fs = await sb.auth.mfa.listFactors(); const f = (fs.data.totp || []).find(x => x.status === 'verified'); const c = await sb.auth.mfa.challenge({ factorId: f.id }); if (c.error) throw c.error; const v = await sb.auth.mfa.verify({ factorId: f.id, challengeId: c.data.id, code: $('#mc').value.trim() }); if (v.error) throw v.error; await boot(true); } catch (er) { toast(errTxt(er), true); } }); };
+}
+function showSetup(msg) {
+  app.innerHTML = `<div class="login"><div class="art"><h1>${t('setup_title')}</h1><p>${t('setup_sub')}</p></div><div class="frm"><div class="card"><h2 style="font-size:20px;margin-bottom:10px">${t('setup_title')}</h2><div class="err">${esc(msg)}</div><p class="muted">${t('setup_body')}</p><button class="btn" data-act="out" style="width:100%;justify-content:center">${t('out')}</button></div></div></div>`;
+}
+async function boot(fresh) {
+  if (!sb) return showLogin('Supabase library failed to load.');
+  const { data: u } = await sb.auth.getUser(); if (!u || !u.user) return showLogin();
+  try { const lv = await sb.auth.mfa.getAuthenticatorAssuranceLevel(); if (lv && lv.data && lv.data.nextLevel === 'aal2' && lv.data.currentLevel !== 'aal2') return showMfa(); } catch (e) { }
+  const { data: p, error } = await sb.from('profiles').select('id,email,full_name,is_super_admin').eq('id', u.user.id).maybeSingle();
+  if (error || !p || p.is_super_admin !== true) { await sb.auth.signOut(); return showLogin(t('notallowed')); }
+  S.me = p; S.user = u.user; S.loaded = false; render();
+  try { await loadAll(); } catch (e) { const m = errTxt(e); if (/does not exist|schema cache|Could not find|column/i.test(m)) return showSetup(m); await sb.auth.signOut(); return showLogin(m); }
+  S.loaded = true; if (fresh) { try { await rpc('platform_log_event', { p_action: 'login' }); S.logs = await rpc('platform_logs_list', { p_limit: 2000 }); } catch (e) { } }
+  await navigate();
+}
+
+/* ---------- global actions + events ---------- */
+Object.assign(ACT, {
+  go(el) { const set = el.dataset.set; if (set) { const [k, v] = set.split('='); const [id, key] = k.split('.'); F(id)[key] = v; F(id).page = 1; } closeModal(); go(el.dataset.p); },
+  close() { closeModal(); }, nav() { S.nav = !S.nav; render(); }, reload() { reload(); },
+  menu(el) { S.menu = S.menu === el.dataset.m ? null : el.dataset.m; render(); },
+  'gs-toggle'() { S.gsOpen = !S.gsOpen; render(); if (S.gsOpen) { const i = $('.gs input'); i && i.focus(); } },
+  lang() { LANG = LANG === 'so' ? 'en' : 'so'; LS.set('pl_lang', LANG); document.documentElement.lang = LANG; if (S.user) render(); else showLogin(); },
+  theme() { const d = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = d; LS.set('pl_theme', d); render(); },
+  sort(el) { const st = F(el.dataset.t); st.dir = st.sort === el.dataset.k ? -(st.dir || 1) : 1; st.sort = el.dataset.k; render(); },
+  pg(el) { const st = F(el.dataset.t); st.page = (st.page || 1) + Number(el.dataset.d); render(); },
+  async out() { try { if (S.user) await rpc('platform_log_event', { p_action: 'logout' }); } catch (e) { } await sb.auth.signOut(); S.user = null; S.loaded = false; closeModal(); showLogin(); }
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el && ACT[el.dataset.act]) {
+    const hadMenu = !!S.menu && el.dataset.act !== 'menu', hadQ = !!S.gq && !!el.closest('.gsr');
+    if (hadMenu) S.menu = null; if (hadQ) S.gq = '';
+    try { const r = ACT[el.dataset.act](el, e); if (r && r.catch) r.catch(er => toast(errTxt(er), true)); } catch (er) { console.error(er); toast(errTxt(er), true); }
+    if ((hadMenu || hadQ) && el.dataset.act !== 'go') render();
+    return;
+  }
+  if (S.menu && !e.target.closest('[data-menu]')) { S.menu = null; render(); }
+  if (S.gq && !e.target.closest('.gs')) { S.gq = ''; render(); }
+});
+document.addEventListener('input', e => {
+  const b = e.target.dataset && e.target.dataset.b; if (!b) return; const [id, k] = b.split('.');
+  if (id === 'gs') { S.gq = e.target.value; const r = $('#gsr'); if (r) { r.hidden = !S.gq; r.innerHTML = searchHTML(); } return; }
+  const st = F(id); st[k] = e.target.type === 'checkbox' ? (e.target.checked ? '1' : '') : e.target.value; if (k !== 'page') st.page = 1; render();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); if (S.menu) { S.menu = null; render(); } } if (e.key === 'Enter' && e.target.matches && e.target.matches('.nav a')) e.target.click(); });
+document.documentElement.dataset.theme = LS.get('pl_theme', (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+document.documentElement.lang = LANG;
+boot();
+</script>
+</body>
+</html>
