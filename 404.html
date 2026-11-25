@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="so"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>School System</title>
+<script>
+// Short school links: .../school-system/bulsho-kaab  ->  school.html?s=bulsho-kaab
+(function () {
+  var parts = location.pathname.split('/').filter(Boolean);
+  var gh = /\.github\.io$/.test(location.hostname);
+  var base = gh && parts.length ? '/' + parts[0] + '/' : '/';
+  var rest = gh ? parts.slice(1) : parts;
+  var s = (rest[0] || '').toLowerCase();
+  if (rest.length === 1 && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length >= 3) {
+    location.replace(base + 'school.html?s=' + encodeURIComponent(s));
+  } else {
+    location.replace(base);
+  }
+})();
+</script></head>
+<body style="font-family:system-ui;padding:24px"><noscript>Page not found. <a href="./">Home</a></noscript></body></html>
